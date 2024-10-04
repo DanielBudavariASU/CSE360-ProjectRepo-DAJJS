@@ -1,7 +1,7 @@
 package Phase1;
-import java.util.Scanner;
+import java.security.SecureRandom;
 import java.util.Arrays;
-
+import java.util.Scanner;
 
 public class Password {
 	protected char[] password;
@@ -136,9 +136,32 @@ public class Password {
 	/* A one-time password and an expiration date and time is set.  The next time the user tries 
 	 * to log in, they must use the one-time password, and the only action possible is to set up a new password.
 	 */
-	public void setOTP()
+	public String setOTP()
 	{
-		
+		 SecureRandom RANDOM = new SecureRandom();
+		 // list all password requaiments 
+		 String UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	     String LOWER = "abcdefghijklmnopqrstuvwxyz";
+	     String DIGITS = "0123456789";
+	     String SPECIAL_CHARACTERS = "!@#$%^&*()-_+=<>?";
+	     String ALL_CHARACTERS = UPPER + LOWER + DIGITS + SPECIAL_CHARACTERS;
+	     int length = (int)(Math.random() * ((20- 8) + 1)) + 8; // generate a random length between 8 and 20
+	     StringBuilder result = new StringBuilder(length); // string builder to build the password
+	     result.append(UPPER.charAt(RANDOM.nextInt(UPPER.length())));           // Uppercase letter
+	     result.append(LOWER.charAt(RANDOM.nextInt(LOWER.length())));           // Lowercase letter
+	     result.append(DIGITS.charAt(RANDOM.nextInt(DIGITS.length())));         // Digit
+	     result.append(SPECIAL_CHARACTERS.charAt(RANDOM.nextInt(SPECIAL_CHARACTERS.length())));  // Special character
+	  // Fill the remaining characters with random choices from all categories
+	        for (int i = 4; i < length; i++) {
+	            result.append(ALL_CHARACTERS.charAt(RANDOM.nextInt(ALL_CHARACTERS.length())));
+	        }
+	        //make the string into an array of charaters 
+	        char[] passArray = result.toString().toCharArray();
+	        //validate the Password
+	        if(validate(passArray)) {
+	        	return result.toString();
+	        }
+	        return "Invild Pasword";
 	}
 	
 	//this is just so you can run this as a separate program in a dump project
