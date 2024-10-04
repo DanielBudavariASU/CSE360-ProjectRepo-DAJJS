@@ -16,10 +16,10 @@ public class Password {
 	 * The user will call this method and they will be prompted to enter a string and it will be validated
 	 * if it is validated then they will be prompted again 
 	 * 
-	 * Then set password returns the password created as a char array
+	 * Then set password prints out whether is was successfully generated or not
 	 * 
 	 * */  
-	public char[] setPassword() {
+	public void setPassword() {
 		
 		Scanner scanner = new Scanner(System.in);
 
@@ -28,7 +28,7 @@ public class Password {
         String input = scanner.nextLine();  // Read the input as a String
 
         // Convert the password string to a char array
-        char[] password = input.toCharArray();
+        password = input.toCharArray();
         
         //reprompts user until they enter a valid password. 
         while(validate(password) != true)
@@ -51,8 +51,17 @@ public class Password {
    	
         System.out.println("Password for user was generated successfully!");
         
-        return password;
-    
+	}
+	
+	// this returns the password as a char array
+	// be careful when using char arrays, if you want to display it you have to convert it to a string first so it's readable
+	public char[] getPassword() {
+	    // Check if the password was not set
+	    if (password == null || password.length == 0) {
+	        return new char[0];  
+	    }
+	    // Otherwise, return the password
+	    return password;
 	}
 	
 	public boolean validate(char[] passwordArr) {
@@ -134,7 +143,7 @@ public class Password {
 	//this is just so you can run this as a separate program in a dump project
 	public static void main(String[] args) {
         Password test = new Password();
-        char[] output = test.setPassword();
-        System.out.println("Generated password: " + String.valueOf(output));
+        test.setPassword();
+        System.out.println("Generated password: " + new String(test.getPassword()));
     }
 }
