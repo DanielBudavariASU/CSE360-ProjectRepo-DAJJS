@@ -55,6 +55,7 @@ public class Password {
 	
 	// this returns the password as a char array
 	// be careful when using char arrays, if you want to display it you have to convert it to a string first so it's readable
+	// you must call the setPassword function first before assigning the user password with the value returned from getPassword
 	public char[] getPassword() {
 	    // Check if the password was not set
 	    if (password == null || password.length == 0) {
@@ -109,7 +110,7 @@ public class Password {
                 foundLongEnough = true;
             }
 
-            // Move to the next character
+            // Move to the next character 
             currentCharNdx++;
             if (currentCharNdx >= passwordArr.length)
                 running = false;
