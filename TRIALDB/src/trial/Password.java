@@ -1,7 +1,9 @@
 package trial;
-
+import java.security.SecureRandom;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class Password implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -10,6 +12,10 @@ public class Password implements Serializable {
     // Constructor to create a password from a string
     public Password(String password) {
         this.password = convertStringToCharList(password);
+    }
+    
+    public Password() {
+        
     }
 
     // Helper method to convert a string to a list of characters
@@ -45,4 +51,34 @@ public class Password implements Serializable {
     public String getPasswordAsString() {
         return convertCharListToString(password);
     }
+    
+	public void setOTP()
+	{
+		
+		 SecureRandom RANDOM = new SecureRandom();
+		 // list all possible characters
+		 String UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	     String LOWER = "abcdefghijklmnopqrstuvwxyz";
+	     String DIGITS = "0123456789";
+	     String SPECIAL_CHARACTERS = "!@#$%^&*()-_+=<>?";
+	     String ALL_CHARACTERS = UPPER + LOWER + DIGITS + SPECIAL_CHARACTERS;
+	     int length = (int)(Math.random() * ((20- 8) + 1)) + 8; // generate a random length between 8 and 20
+	     StringBuilder result = new StringBuilder(length); // string builder to build the password
+	     result.append(UPPER.charAt(RANDOM.nextInt(UPPER.length())));           // Uppercase letter
+	     result.append(LOWER.charAt(RANDOM.nextInt(LOWER.length())));           // Lowercase letter
+	     result.append(DIGITS.charAt(RANDOM.nextInt(DIGITS.length())));         // Digit
+	     result.append(SPECIAL_CHARACTERS.charAt(RANDOM.nextInt(SPECIAL_CHARACTERS.length())));  // Special character
+	     //Fill the remaining characters with random choices from all categories
+	        for (int i = 4; i < length; i++) {
+	            result.append(ALL_CHARACTERS.charAt(RANDOM.nextInt(ALL_CHARACTERS.length())));
+	        }
+	        
+	      LocalDateTime expirationTime = LocalDateTime.now().plusMinutes(30);
+          DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+          String formattedExpirationTime = expirationTime.format(formatter);
+
+          System.out.println("OTP has been generated and expires in 30 minutes on " + formattedExpirationTime);
+	      
+	      System.out.println("Your temporary password is: " + result.toString());
+	}
 }
