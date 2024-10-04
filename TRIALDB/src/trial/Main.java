@@ -15,6 +15,15 @@ public class Main {
 
             System.out.print("Enter admin password: ");
             String adminPassword = scanner.nextLine();
+            
+            System.out.print("Enter your password again: ");
+            String adminPassword2 = scanner.nextLine();
+
+            while(!adminPassword.equals(adminPassword2))
+            {
+            	System.out.print("These passwords do not match! Please re-enter: ");
+                adminPassword2 = scanner.nextLine();
+            }
 
             Admin admin = new Admin(adminUsername, adminPassword);
             db.addUser(admin);
@@ -109,10 +118,19 @@ public class Main {
                         String newUsername = scanner.nextLine();
 
                         System.out.print("Enter your new password: ");
-                        String newPassword = scanner.nextLine();
+                        String passwordAttempt1 = scanner.nextLine();
+                        
+                        System.out.print("Enter your password again: ");
+                        String passwordAttempt2 = scanner.nextLine();
+
+                        while(!passwordAttempt1.equals(passwordAttempt2))
+                        {
+                        	System.out.print("These passwords do not match! Please re-enter: ");
+                            passwordAttempt2 = scanner.nextLine();
+                        }
 
                         // Create a new user based on the invitation's role
-                        User newUser = new User(newUsername, newPassword, invitation.getRole());
+                        User newUser = new User(newUsername, passwordAttempt1, invitation.getRole());
                         db.addUser(newUser);
                         invitation.markAsUsed();  // Mark the invitation as used
                         db.saveInvitations();     // Save the state of invitations
