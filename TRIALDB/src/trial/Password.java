@@ -52,7 +52,7 @@ public class Password implements Serializable {
         return convertCharListToString(password);
     }
     
-	public void setOTP()
+	public String setOTP()
 	{
 		
 		 SecureRandom RANDOM = new SecureRandom();
@@ -72,13 +72,22 @@ public class Password implements Serializable {
 	        for (int i = 4; i < length; i++) {
 	            result.append(ALL_CHARACTERS.charAt(RANDOM.nextInt(ALL_CHARACTERS.length())));
 	        }
-	        
-	      LocalDateTime expirationTime = LocalDateTime.now().plusMinutes(30);
-          DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-          String formattedExpirationTime = expirationTime.format(formatter);
 
-          System.out.println("OTP has been generated and expires in 30 minutes on " + formattedExpirationTime);
 	      
-	      System.out.println("Your temporary password is: " + result.toString());
+	      System.out.println("Your temporary password is: " + result.toString()); 
+	      
+	      return result.toString(); 
 	}
+	
+	public LocalDateTime setExpiration()
+	{
+		LocalDateTime expirationTime = LocalDateTime.now().plusMinutes(30);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String formattedExpirationTime = expirationTime.format(formatter);
+
+        System.out.println("OTP has been generated and expires in 30 minutes on " + formattedExpirationTime);
+		return expirationTime;
+	}
+	
+	
 }

@@ -4,7 +4,8 @@ public class Admin extends User {
     private static final long serialVersionUID = 1L;
 
     public Admin(String username, String password) {
-        super(username, password, "Admin");  // Admin role
+        super(username, password, "Admin"); 
+        // Admin role
     }
 
     // Method to invite a new user by generating an invitation code
@@ -23,6 +24,14 @@ public class Admin extends User {
         }
     }
 
+     
+    public void resetUserPassword(String newPassword, String username, Database db)
+    {
+    	//finds the user to be deleted
+    	User userToReset = db.findUserByUsername(username);
+    	//this functions wipes the previous password and creates a new one
+    	userToReset.resetPassword(newPassword);
+    }
     // Method to list all users
     public void listUsers(Database db) {
         db.listAllUsers();

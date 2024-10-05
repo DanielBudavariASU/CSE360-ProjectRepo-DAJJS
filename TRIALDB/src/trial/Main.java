@@ -1,5 +1,6 @@
 package trial;
-
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 public class Main {
@@ -42,12 +43,13 @@ public class Main {
             switch (choice) {
                 case 1:
                     // Normal login (for admins or users)
+                	
                     System.out.print("Enter username: ");
                     String loginUsername = scanner.nextLine();
 
                     System.out.print("Enter password: ");
                     String loginPassword = scanner.nextLine();
-
+                     
                     User foundUser = db.findUserByUsername(loginUsername);
 
                     if (foundUser != null && foundUser.validateLogin(loginPassword)) {
@@ -62,6 +64,7 @@ public class Main {
                                 System.out.println("2. List Users");
                                 System.out.println("3. Delete a User");
                                 System.out.println("4. Logout");
+                                System.out.println("5. Reset user password");
                                 System.out.print("Choose an option: ");
                                 int adminChoice = scanner.nextInt();
                                 scanner.nextLine();
@@ -93,7 +96,54 @@ public class Main {
                                         adminLoggedIn = false;
                                         System.out.println("Logged out of admin account.");
                                         break;
-
+                                    case 5:
+                                    	
+                                    	System.out.print("Enter username: ");
+                                        String userToReset = scanner.nextLine();
+                                        User findUser = db.findUserByUsername(userToReset);
+                                        
+                                        //i'm not sure if this section should be done in the driver file or in admin
+                                        if (findUser != null)
+                                        {
+                                        
+                                        	Password password = new Password();
+                                        	String tempPassword = password.setOTP();
+                                        	LocalDateTime date = password.setExpiration();
+                                        	boolean expired = true;
+                                        	
+                                        	//reprompts user to enter the correct password until it is correct
+                                        	while (expired = true)
+                                        	{
+	                                        	System.out.print("Enter your temporary password: ");
+	                                        	
+	                                            while(!tempPassword.equals(scanner.nextLine()))
+	                                            {
+	                                            	System.out.print("Password does not match, please try again: ");
+	                                            }
+	                                            
+	                                            if(LocalDateTime.now().isBefore(date))
+	                                       	 	{
+	                                       		 	System.out.println("Password is not expired, resetting password: ");
+	                                       		 	expired = false;
+	                                       	 	}
+	                                       	 	else
+	                                       	 	{
+	                                       	 		System.out.println("Temporary password is expired. ");
+	                                       	 		tempPassword = password.setOTP();
+	                                       	 		date = password.setExpiration();
+	                                       	 	}
+                                        	}
+                                        	
+                                        	System.out.print("Enter your new password: ");
+                                        	String newPass=scanner.nextLine();
+                                        	adminUser.resetUserPassword(tempPassword, loginUsername, db);
+	                                	
+                                        }
+                             
+                                        System.out.print("This user was not found. ");
+                                        
+                                        
+                                        break;
                                     default:
                                         System.out.println("Invalid option. Try again.");
                                 }
@@ -108,7 +158,7 @@ public class Main {
                     break;
 
                 case 2:
-                    // Invitation-based login for new users
+                    // Invitation-based login for new users  
                     System.out.print("Enter invitation code: ");
                     String invitationCode = scanner.nextLine();
 
