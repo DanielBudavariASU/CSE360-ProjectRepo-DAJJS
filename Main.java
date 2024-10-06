@@ -138,7 +138,7 @@ public class Main {
                                         	
                                         	System.out.println("Enter your new password: ");
                                         	String newPass=scanner.nextLine();
-                                        	adminUser.resetUserPassword(tempPassword, loginUsername, db);
+                                        	adminUser.resetUserPassword(newPass, loginUsername, db);
 	                                	
                                         }
                              
