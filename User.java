@@ -75,9 +75,9 @@ public class User implements Serializable {
 
     // Password reset
     public void resetPassword(String newPassword) {
-        this.password = null;
         this.password.resetPassword(newPassword);
-        System.out.println("The new password is this: " + this.password); 
+        //this line of code does not work
+        System.out.println("The new password is this: " + this.password.getPasswordAsString());  
     }
 
     public String getUsername() {
