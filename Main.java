@@ -112,7 +112,7 @@ public class Main {
                                         	boolean expired = true;
                                         	
                                         	//reprompts user to enter the correct password until it is correct
-                                        	while (expired = true)
+                                        	while (expired == true)
                                         	{
 	                                        	System.out.print("Enter your temporary password: ");
 	                                        	
