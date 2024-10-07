@@ -73,10 +73,8 @@ public class User implements Serializable {
         this.role.removeRole(roleName);
     }
 
-    // Password reset
     public void resetPassword(String newPassword) {
         this.password.resetPassword(newPassword);
-        //this line of code does not work
         System.out.println("The new password is this: " + this.password.getPasswordAsString());  
     }
 
