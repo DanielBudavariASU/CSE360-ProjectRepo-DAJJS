@@ -15,7 +15,7 @@ public class CreateAccount extends Application{
         primaryStage.setTitle("Login System");
 
         cardPane = new CardPane();
-        Scene scene = new Scene(cardPane, 400, 300);
+        Scene scene = new Scene(cardPane, 400, 900);
         
         primaryStage.setScene(scene);
         primaryStage.show();
