@@ -4,9 +4,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 public class Main {
+	private  static Database d = new Database()
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        Database db = new Database();
+        Database db = d;
 
         // Check if any admin exists. If not, prompt to create the first admin.
         if (!db.isAdminPresent()) {
@@ -204,4 +205,6 @@ public class Main {
 
         scanner.close();
     }
+public static Database getdb(){
+	return d;
 }
