@@ -52,41 +52,44 @@ public class Password implements Serializable {
         return convertCharListToString(password);
     }
     
-	public String setOTP()
-	{
+    public String setOTP()
+    {
 		
-		 SecureRandom RANDOM = new SecureRandom();
-		 // list all possible characters
-		 String UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	     String LOWER = "abcdefghijklmnopqrstuvwxyz";
-	     String DIGITS = "0123456789";
-	     String SPECIAL_CHARACTERS = "!@#$%^&*()-_+=<>?";
-	     String ALL_CHARACTERS = UPPER + LOWER + DIGITS + SPECIAL_CHARACTERS;
-	     int length = (int)(Math.random() * ((20- 8) + 1)) + 8; // generate a random length between 8 and 20
-	     StringBuilder result = new StringBuilder(length); // string builder to build the password
-	     result.append(UPPER.charAt(RANDOM.nextInt(UPPER.length())));           // Uppercase letter
-	     result.append(LOWER.charAt(RANDOM.nextInt(LOWER.length())));           // Lowercase letter
-	     result.append(DIGITS.charAt(RANDOM.nextInt(DIGITS.length())));         // Digit
-	     result.append(SPECIAL_CHARACTERS.charAt(RANDOM.nextInt(SPECIAL_CHARACTERS.length())));  // Special character
-	     //Fill the remaining characters with random choices from all categories
-	        for (int i = 4; i < length; i++) {
-	            result.append(ALL_CHARACTERS.charAt(RANDOM.nextInt(ALL_CHARACTERS.length())));
-	        }
-	      
-	      System.out.println("Your temporary password is: " + result.toString()); 
-	      
-	      return result.toString(); 
+	SecureRandom RANDOM = new SecureRandom();
+	// list all possible characters
+        String UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	String LOWER = "abcdefghijklmnopqrstuvwxyz";
+	String DIGITS = "0123456789";
+	String SPECIAL_CHARACTERS = "!@#$%^&*()-_+=<>?";
+	    
+	String ALL_CHARACTERS = UPPER + LOWER + DIGITS + SPECIAL_CHARACTERS;
+	int length = (int)(Math.random() * ((20- 8) + 1)) + 8; // generate a random length between 8 and 20
+	StringBuilder result = new StringBuilder(length); // string builder to build the password
+	    
+	result.append(UPPER.charAt(RANDOM.nextInt(UPPER.length())));           // Uppercase letter
+	result.append(LOWER.charAt(RANDOM.nextInt(LOWER.length())));           // Lowercase letter
+	result.append(DIGITS.charAt(RANDOM.nextInt(DIGITS.length())));         // Digit
+	result.append(SPECIAL_CHARACTERS.charAt(RANDOM.nextInt(SPECIAL_CHARACTERS.length())));  // Special character
+	//Fill the remaining characters with random choices from all categories
+	for (int i = 4; i < length; i++) {
+		result.append(ALL_CHARACTERS.charAt(RANDOM.nextInt(ALL_CHARACTERS.length())));
 	}
+	      
+	System.out.println("Your temporary password is: " + result.toString()); 
+	      
+	return result.toString(); 
+     }
 	
-	public LocalDateTime setExpiration()
-	{
-		LocalDateTime expirationTime = LocalDateTime.now().plusMinutes(30);
+     //returns the expiration date for OTP 
+     public LocalDateTime setExpiration()
+     {
+	LocalDateTime expirationTime = LocalDateTime.now().plusMinutes(30);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         String formattedExpirationTime = expirationTime.format(formatter);
 
         System.out.println("OTP has been generated and expires in 30 minutes on " + formattedExpirationTime);
-		return expirationTime;
-	}
+	return expirationTime;
+     }
 	
 	
 }
