@@ -9,6 +9,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import Phase1.Main;
+import Phase1.User;
 public class AdminHomeScreen extends Application{
     private Admin admin;
     private Database db = Main.getdb();
@@ -31,7 +32,9 @@ public class AdminHomeScreen extends Application{
         Button resetPasswordButton = new Button("Reset User Password");
         Button deleteUserButton = new Button("Delete User");
         Button listUsersButton = new Button("List All Users");
-
+        Button addRole = new Button("add role");
+        Button removeRole = new Button("remove role");
+        Button logout = new Button("Logout");
         // Input fields for user interaction
         TextField inviteCodeInput = new TextField();
         inviteCodeInput.setPromptText("Enter invite code");
@@ -74,7 +77,27 @@ public class AdminHomeScreen extends Application{
 
         // List Users Button Action
         listUsersButton.setOnAction(e -> admin.listUsers(db));
-
+        addRole.setOnAction(e -> {
+        	System.out.println("Enter Username ");
+            String in = resetUserInput.getText();
+            User temp = db.findUserByUsername(in);
+            System.out.println("Enter role to be added ");
+            String in2 = resetUserInput.getText();
+           temp.addRole(in2);
+            
+        });
+        removeRole.setOnAction(e -> {
+        	System.out.println("Enter Username ");
+            String in = resetUserInput.getText();
+            User temp = db.findUserByUsername(in);
+            System.out.println("Enter role to be removed ");
+            String in2 = resetUserInput.getText();
+           temp.removeRole(in2);
+            
+        });
+        logout.setOnAction(e -> {
+          
+        });
         // Layout
         VBox layout = new VBox(10, inviteCodeInput, inviteUserButton, resetUserInput, resetPasswordButton, deleteUserButton, listUsersButton);
         Scene scene = new Scene(layout, 400, 300);
