@@ -43,8 +43,11 @@ public class AdminHomeScreen extends Application{
         inviteUserButton.setOnAction(e -> {
             String newUser = inviteCodeInput.getText();
             //Role newUser = new Role();
+            if(newUser.equals("User") || newUser.equals("Admin") || newUser.equals("Instuctor"))
             admin.inviteUser( newUser);
-            // userList.add(newUser); Uncomment if needed
+            else {
+            	System.out.println("Error: invaild role");
+            }
         });
 
         // Reset Password Button Action
