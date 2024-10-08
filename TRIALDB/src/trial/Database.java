@@ -56,15 +56,20 @@ public class Database {
     }
 
     // List all users
-    public void listAllUsers() {
+    public String listAllUsers() {
+    	StringBuilder userList = new StringBuilder();
+
         if (users.isEmpty()) {
-            System.out.println("No users in the system.");
+            userList.append("No users in the system.\n");
         } else {
             for (User user : users) {
-                System.out.println(user.getUsername());
-                System.out.println(user.getRole().getRoles());
+                userList.append(user.getUsername())
+                        .append(" - Role: ")
+                        .append(user.getRole().getRoles())
+                        .append("\n");
             }
         }
+        return userList.toString();  // Return the user list as a single string
     }
 
     // Add an invitation and save it to file
