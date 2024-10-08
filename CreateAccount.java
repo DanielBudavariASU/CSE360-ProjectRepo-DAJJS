@@ -1,4 +1,4 @@
-package Phase1;
+package trial;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -33,11 +33,25 @@ public class CreateAccount extends Application {
             Label welcomeLabel = new Label("Welcome to the Login System");
             Button createAccountButton = new Button("Create Account");
             Button loginButton = new Button("Login");
+            
 
-            createAccountButton.setOnAction(e -> {
-                getChildren().clear();
-                getChildren().add(createInviteCodePanel());
-            });
+            if(!db.isAdminPresent()) 
+            {
+            	createAccountButton.setOnAction(e -> {
+                    getChildren().clear();
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION, "No admin found. Creating first admin account.");
+                	alert.showAndWait();
+                    getChildren().add(createSignupPanel("admin"));
+                });
+                
+            }
+            else {
+            	
+            	createAccountButton.setOnAction(e -> {
+            		getChildren().clear();
+            		getChildren().add(createInviteCodePanel());
+            	});
+            }
 
             loginButton.setOnAction(e -> {
                 getChildren().clear();
@@ -54,34 +68,38 @@ public class CreateAccount extends Application {
 
             TextField inviteCodeField = new TextField();
             Button nextButton = new Button("Next");
-
+            
+            
             panel.getChildren().addAll(
-                new Label("Enter Invite Code:"), inviteCodeField,
-                nextButton
+            		new Label("Enter Invite Code:"), inviteCodeField,
+            		nextButton
             );
 
             nextButton.setOnAction(e -> {
             	String inviteCode = inviteCodeField.getText();
 
-                // Find the invitation by the invite code in the database
-                Invitation invitation = db.findInvitationByCode(inviteCode);
+	            // Find the invitation by the invite code in the database
+	            Invitation invitation = db.findInvitationByCode(inviteCode);
 
-                if (invitation != null) {
-                    // If the invitation exists, move to the signup panel
-                    getChildren().clear();
-                    getChildren().add(createSignupPanel(invitation.getRole()));
-                } else {
-                    // If no valid invitation found, show an error
-                    Alert alert = new Alert(Alert.AlertType.ERROR, "Invalid or expired invite code. Please try again.");
-                    alert.showAndWait();
-                }
+	            if (invitation != null) {
+	            	// If the invitation exists, move to the signup panel
+	            	getChildren().clear();
+	            	getChildren().add(createSignupPanel(invitation.getRole()));
+	            } 
+	            else {
+	            	// If no valid invitation found, show an error
+	            	Alert alert = new Alert(Alert.AlertType.ERROR, "Invalid or expired invite code. Please try again.");
+	            	alert.showAndWait();
+	            }
+            	
             });
+            
 
             return panel;
         }
         
         private VBox createSignupPanel(String role) {
-            VBox panel = new VBox(10);
+        	VBox panel = new VBox(10);
             panel.setStyle("-fx-padding: 10; -fx-alignment: center;");
 
             TextField firstNameField = new TextField();
@@ -107,6 +125,7 @@ public class CreateAccount extends Application {
             );
 
             submitButton.setOnAction(e -> {
+            	
             	String username = usernameField.getText();
                 String password = passwordField.getText();
                 
@@ -118,7 +137,7 @@ public class CreateAccount extends Application {
                         db.addUser(admin);
 
                         // Show success alert for admin creation
-                        Alert alert = new Alert(Alert.AlertType.INFORMATION, "No admin found. User is set to Admin.");
+                        Alert alert = new Alert(Alert.AlertType.INFORMATION, "User is set to Admin.");
                         alert.showAndWait();
                     } else {
                         // Add regular user
@@ -157,8 +176,17 @@ public class CreateAccount extends Application {
 
             loginButton.setOnAction(e -> {
                 // potential logic for authentication
-                Alert alert = new Alert(Alert.AlertType.INFORMATION, "Login successful!");
-                alert.showAndWait();
+            	User foundUser = db.findUserByUsername(usernameField.getText());
+
+                if (foundUser != null && foundUser.validateLogin(passwordField.getText())) {
+                	 Alert alert = new Alert(Alert.AlertType.INFORMATION, "Login successful! Welcome, "  + foundUser.getUsername());
+                	 alert.showAndWait();
+                }
+                else
+                {
+                	Alert alert = new Alert(Alert.AlertType.ERROR, "A credential error occurred.");
+                    alert.showAndWait();
+                }
                 // redirects to role options
                 //should add that in soon hopefully
             });
