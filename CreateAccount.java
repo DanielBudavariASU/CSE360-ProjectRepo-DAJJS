@@ -1,15 +1,14 @@
 package Phase1;
-
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
-
 public class CreateAccount extends Application {
 
     private CardPane cardPane;
+    private Database db = new Database();  // Use your existing Database class
 
     @Override
     public void start(Stage primaryStage) {
@@ -62,17 +61,26 @@ public class CreateAccount extends Application {
             );
 
             nextButton.setOnAction(e -> {
-                String inviteCode = inviteCodeField.getText();
-                // we can add logic to validate the invite code but i am not gonna do that :P
+            	String inviteCode = inviteCodeField.getText();
+
+                // Find the invitation by the invite code in the database
+                Invitation invitation = db.findInvitationByCode(inviteCode);
+
+                if (invitation != null) {
+                    // If the invitation exists, move to the signup panel
                     getChildren().clear();
-                    getChildren().add(createSignupPanel());
-               
+                    getChildren().add(createSignupPanel(invitation.getRole()));
+                } else {
+                    // If no valid invitation found, show an error
+                    Alert alert = new Alert(Alert.AlertType.ERROR, "Invalid or expired invite code. Please try again.");
+                    alert.showAndWait();
+                }
             });
 
             return panel;
         }
         
-        private VBox createSignupPanel() {
+        private VBox createSignupPanel(String role) {
             VBox panel = new VBox(10);
             panel.setStyle("-fx-padding: 10; -fx-alignment: center;");
 
@@ -99,9 +107,28 @@ public class CreateAccount extends Application {
             );
 
             submitButton.setOnAction(e -> {
-                if (passwordField.getText().equals(confirmPasswordField.getText())) {
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION, "Account created successfully!");
-                    alert.showAndWait();
+            	String username = usernameField.getText();
+                String password = passwordField.getText();
+                
+            	if (passwordField.getText().equals(confirmPasswordField.getText())) {
+                	// Check if admin is present
+                    if (!db.isAdminPresent()) {
+                        // No admin exists, first user becomes admin
+                        Admin admin = new Admin(username, password);
+                        db.addUser(admin);
+
+                        // Show success alert for admin creation
+                        Alert alert = new Alert(Alert.AlertType.INFORMATION, "No admin found. User is set to Admin.");
+                        alert.showAndWait();
+                    } else {
+                        // Add regular user
+                        User user = new User(username, password, role);
+                        db.addUser(user);
+
+                        // Show success alert for user creation
+                        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Account created successfully!");
+                        alert.showAndWait();
+                    }
                     // Redirect to the login page
                     getChildren().clear();
                     getChildren().add(createLoginPanel());
