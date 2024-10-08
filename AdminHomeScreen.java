@@ -79,8 +79,37 @@ public class AdminHomeScreen extends Application{
             admin.deleteUser(db, toDel);
         });
 
-        // List Users Button Action on the console, I'm too lazy right now to get it to print on the screen
-        listUsersButton.setOnAction(e -> admin.listUsers(db));
+        listUsersButton.setOnAction(e -> {
+        	// Create a new Stage (popup window)
+            Stage popupStage = new Stage();
+            popupStage.setTitle("List of Users");
+
+            // Set it to be a modal window
+            popupStage.initModality(Modality.APPLICATION_MODAL);
+
+            // VBox to hold the list of users
+            VBox userListVBox = new VBox(10);
+            userListVBox.setStyle("-fx-padding: 10; -fx-alignment: center;");
+
+            // Call admin.listUsers() which internally calls db.listAllUsers()
+            String userList = db.listAllUsers();  // Adjust listUsers to return the user list string
+
+            // Add the user list as a label
+            Label usersLabel = new Label(userList);
+            userListVBox.getChildren().add(usersLabel);
+
+            // Create an OK button to close the popup
+            Button okButton = new Button("OK");
+            okButton.setOnAction(event -> popupStage.close()); // Close the popup window
+
+            // Add the OK button to the layout
+            userListVBox.getChildren().add(okButton);
+
+            // Set the scene and show the popup window
+            Scene popupScene = new Scene(userListVBox, 300, 400);
+            popupStage.setScene(popupScene);
+            popupStage.showAndWait();  // Show the popup and wait until it is closed
+        });
         
         logoutButton.setOnAction(e -> {
         	Stage stage = (Stage) logoutButton.getScene().getWindow(); // Get current stage
