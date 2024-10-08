@@ -6,7 +6,8 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
-public class CreateAccount extends Application{
+
+public class CreateAccount extends Application {
 
     private CardPane cardPane;
 
@@ -36,7 +37,7 @@ public class CreateAccount extends Application{
 
             createAccountButton.setOnAction(e -> {
                 getChildren().clear();
-                getChildren().add(createSignupPanel());
+                getChildren().add(createInviteCodePanel());
             });
 
             loginButton.setOnAction(e -> {
@@ -48,6 +49,29 @@ public class CreateAccount extends Application{
             return panel;
         }
 
+        private VBox createInviteCodePanel() {
+        	VBox panel = new VBox(10);
+        	panel.setStyle("-fx-padding: 10; -fx-alignment: center;");
+
+            TextField inviteCodeField = new TextField();
+            Button nextButton = new Button("Next");
+
+            panel.getChildren().addAll(
+                new Label("Enter Invite Code:"), inviteCodeField,
+                nextButton
+            );
+
+            nextButton.setOnAction(e -> {
+                String inviteCode = inviteCodeField.getText();
+                // we can add logic to validate the invite code but i am not gonna do that :P
+                    getChildren().clear();
+                    getChildren().add(createSignupPanel());
+               
+            });
+
+            return panel;
+        }
+        
         private VBox createSignupPanel() {
             VBox panel = new VBox(10);
             panel.setStyle("-fx-padding: 10; -fx-alignment: center;");
@@ -105,10 +129,11 @@ public class CreateAccount extends Application{
             );
 
             loginButton.setOnAction(e -> {
-                // Here you can add logic for authentication
+                // potential logic for authentication
                 Alert alert = new Alert(Alert.AlertType.INFORMATION, "Login successful!");
                 alert.showAndWait();
-                // You can redirect to a main application screen after login
+                // redirects to role options
+                //should add that in soon hopefully
             });
 
             return panel;
