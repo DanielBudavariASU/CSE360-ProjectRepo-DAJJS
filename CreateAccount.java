@@ -4,12 +4,18 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import java.util.*;
 
 public class CreateAccount extends Application {
 
     private CardPane cardPane;
-    private Database db = new Database();  // Use your existing Database class
+    private static Database d = new Database();  // Use your existing Database class
 
+    public static Database getDb() 
+    {
+    	return d;
+    }
+    
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Login System");
@@ -22,6 +28,7 @@ public class CreateAccount extends Application {
     }
 
     class CardPane extends StackPane {
+    	Database db = d; 
         public CardPane() {
             getChildren().add(createWelcomePanel());
         }
@@ -181,6 +188,17 @@ public class CreateAccount extends Application {
                 if (foundUser != null && foundUser.validateLogin(passwordField.getText())) {
                 	 Alert alert = new Alert(Alert.AlertType.INFORMATION, "Login successful! Welcome, "  + foundUser.getUsername());
                 	 alert.showAndWait();
+                	 
+                	 if(foundUser.getRole().getRoles().contains("Admin"))
+                	 {
+                		 getChildren().add(createAdminHomePage());
+                		 
+                	 }
+                	 else
+                	 {
+                		 getChildren().add(createUserHomePage());
+                	 }	 
+                	 
                 }
                 else
                 {
@@ -188,9 +206,39 @@ public class CreateAccount extends Application {
                     alert.showAndWait();
                 }
                 // redirects to role options
-                //should add that in soon hopefully
+                // should add that in soon hopefully
             });
 
+            return panel;
+        }
+        
+        private VBox createAdminHomePage() {
+            VBox panel = new VBox(10);
+            panel.setStyle("-fx-padding: 10; -fx-alignment: center;");
+
+            Stage stage = new Stage();
+            AdminHomeScreen adminHomescreen = new AdminHomeScreen(); // Create an instance of AdminHomeScreen
+            try {
+            	adminHomescreen.start(stage); // Start AdminHomeScreen stage (login page)
+            } catch (Exception ex) {
+                  ex.printStackTrace();
+                }
+            
+            return panel;
+        }
+        
+        private VBox createUserHomePage() {
+            VBox panel = new VBox(10);
+            panel.setStyle("-fx-padding: 10; -fx-alignment: center;");
+
+            Stage stage = new Stage();
+            UserHomePage userHomePage = new UserHomePage(); // Create an instance of AdminHomeScreen
+            try {
+            	userHomePage.start(stage); // Start AdminHomeScreen stage (login page)
+            } catch (Exception ex) {
+                  ex.printStackTrace();
+                }
+            
             return panel;
         }
     }
