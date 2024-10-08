@@ -205,8 +205,6 @@ public class CreateAccount extends Application {
                 	Alert alert = new Alert(Alert.AlertType.ERROR, "A credential error occurred.");
                     alert.showAndWait();
                 }
-                // redirects to role options
-                // should add that in soon hopefully
             });
 
             return panel;
