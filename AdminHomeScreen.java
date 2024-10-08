@@ -1,18 +1,22 @@
-package Phase1;
+package trial;
 
 import java.util.ArrayList;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import Phase1.Main;
-import Phase1.User;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.Stage;
+
 public class AdminHomeScreen extends Application{
     private Admin admin;
-    private Database db = Main.getdb();
+    private Database db = CreateAccount.getDb(); 
 
     public AdminHomeScreen(Admin admin) {
         this.admin = admin;
@@ -21,7 +25,7 @@ public class AdminHomeScreen extends Application{
     public AdminHomeScreen() {
         String tusername = "Admin";
         Password pass = new Password();
-        String temppass = pass.setOTP();
+        String temppass = " ";
         this.admin = new Admin(tusername, temppass);
     }
 
@@ -32,25 +36,25 @@ public class AdminHomeScreen extends Application{
         Button resetPasswordButton = new Button("Reset User Password");
         Button deleteUserButton = new Button("Delete User");
         Button listUsersButton = new Button("List All Users");
-        Button addRole = new Button("add role");
-        Button removeRole = new Button("remove role");
-        Button logout = new Button("Logout");
+        Button logoutButton = new Button("Logout");
+
         // Input fields for user interaction
         TextField inviteCodeInput = new TextField();
-        inviteCodeInput.setPromptText("Enter invite code");
+        inviteCodeInput.setPromptText("Enter role for user");
 
         TextField resetUserInput = new TextField();
         resetUserInput.setPromptText("Enter user for password reset");
 
         // Invite User Button Action
         inviteUserButton.setOnAction(e -> {
-            String newUser = inviteCodeInput.getText();
+            String newRole = inviteCodeInput.getText();
             //Role newUser = new Role();
-            if(newUser.equals("User") || newUser.equals("Admin") || newUser.equals("Instuctor"))
-            admin.inviteUser( newUser);
-            else {
-            	System.out.println("Error: invaild role");
-            }
+            Invitation invite = admin.inviteUser( newRole);
+            db.addInvitation(invite);
+            Alert alert = new Alert(Alert.AlertType.INFORMATION, "Invitation sent to new user with role of " + invite.getRole() + ": " + invite.getCode());
+       	 	alert.showAndWait();
+       	 	System.out.println(invite.getCode()); //print on console so you can copy it
+            // userList.add(newUser); Uncomment if needed
         });
 
         // Reset Password Button Action
@@ -75,35 +79,26 @@ public class AdminHomeScreen extends Application{
             admin.deleteUser(db, toDel);
         });
 
-        // List Users Button Action
+        // List Users Button Action on the console, I'm too lazy right now to get it to print on the screen
         listUsersButton.setOnAction(e -> admin.listUsers(db));
-        addRole.setOnAction(e -> {
-        	System.out.println("Enter Username ");
-            String in = resetUserInput.getText();
-            User temp = db.findUserByUsername(in);
-            System.out.println("Enter role to be added ");
-            String in2 = resetUserInput.getText();
-           temp.addRole(in2);
-            
+        
+        logoutButton.setOnAction(e -> {
+        	Stage stage = (Stage) logoutButton.getScene().getWindow(); // Get current stage
+            CreateAccount createAccount = new CreateAccount(); // Create an instance of CreateAccount
+            try {
+                createAccount.start(stage); // Start CreateAccount stage (login page)
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         });
-        removeRole.setOnAction(e -> {
-        	System.out.println("Enter Username ");
-            String in = resetUserInput.getText();
-            User temp = db.findUserByUsername(in);
-            System.out.println("Enter role to be removed ");
-            String in2 = resetUserInput.getText();
-           temp.removeRole(in2);
-            
-        });
-        logout.setOnAction(e -> {
-          
-        });
+
         // Layout
-        VBox layout = new VBox(10, inviteCodeInput, inviteUserButton, resetUserInput, resetPasswordButton, deleteUserButton, listUsersButton);
+        VBox layout = new VBox(10, inviteCodeInput, inviteUserButton, resetUserInput, resetPasswordButton, deleteUserButton, listUsersButton, logoutButton);
         Scene scene = new Scene(layout, 400, 300);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
+    
 
     public static void main(String[] args) {
         launch(args);
