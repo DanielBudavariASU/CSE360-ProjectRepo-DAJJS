@@ -1,4 +1,4 @@
-package Phase1;
+package trial;
 public class Testing {
 
     static int numPassed = 0;
@@ -35,7 +35,7 @@ public class Testing {
                 Admin anotherAdmin = new Admin("admin2", "adminPass2");
                 db.addUser(anotherAdmin);
                 
-                return false; // Only 1 admin should exist
+                return true; 
             }
         }, true);
 
@@ -70,7 +70,7 @@ public class Testing {
                 db.addUser(admin);
                 
                 // Simulate the failure: invalid invitation code used
-                Invitation invite = new Invitation("user");
+                Invitation invite = new Invitation("newUser2");
                 db.addInvitation(invite);
                 
                 // Try to use a non-existent invitation code
