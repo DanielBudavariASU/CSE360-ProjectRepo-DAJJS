@@ -13,20 +13,23 @@ import javafx.stage.Stage;
  */
 public class UserHomePage extends Application {
     private CardPane cardPane;  // Pane to hold the welcome content
-    private User user;
+    private User user;  // Instance variable for the User object
+    
+    // Constructor that initializes the User instance with provided details
     public UserHomePage(User user) {
         this.user = user;
     }
 
     /**
      * Default constructor that creates a placeholder admin user.
+     * This constructor initializes a user with default values.
      */
     public UserHomePage() {
-        String tusername = "User";
-        Password pass = new Password();
-        String temppass = " ";
-        String role = "User";
-        this.user = new User(tusername, temppass, role);
+        String tusername = "User";  // Default username
+        Password pass = new Password();  // Placeholder password instance
+        String temppass = " ";  // Temporary password value
+        String role = "User";  // Default role
+        this.user = new User(tusername, temppass, role);  // Initialize User with default values
     }
 
     /**
@@ -37,12 +40,12 @@ public class UserHomePage extends Application {
      */
     @Override
     public void start(Stage primaryStage) {
-        primaryStage.setTitle("User Homepage");
+        primaryStage.setTitle("User Homepage");  // Set the title of the window
 
-        cardPane = new CardPane();
+        cardPane = new CardPane();  // Initialize the CardPane for the UI
         Scene scene = new Scene(cardPane, 400, 900);  // Sets the size of the window
 
-        primaryStage.setScene(scene);
+        primaryStage.setScene(scene);  // Set the scene for the primary stage
         primaryStage.show();  // Display the window
     }
 
@@ -57,7 +60,7 @@ public class UserHomePage extends Application {
          * by adding the welcome panel to the pane.
          */
         public CardPane() {
-            getChildren().add(createWelcomePanel());
+            getChildren().add(createWelcomePanel());  // Add the welcome panel to the CardPane
         }
 
         /**
@@ -70,9 +73,9 @@ public class UserHomePage extends Application {
             VBox panel = new VBox(10);  // VBox with spacing of 10 between elements
             panel.setStyle("-fx-padding: 10; -fx-alignment: center;");  // Set padding and alignment
 
-            Label welcomeLabel = new Label("Welcome to User Homepage");
-            Button logoutButton = new Button("Logout");
-            Button searchButton = new Button("Search Articles");
+            Label welcomeLabel = new Label("Welcome to User Homepage");  // Welcome message
+            Button logoutButton = new Button("Logout");  // Button for logging out
+            Button searchButton = new Button("Search Articles");  // Button to initiate article search
 
             // Set action for the logout button
             logoutButton.setOnAction(e -> {
@@ -87,21 +90,22 @@ public class UserHomePage extends Application {
                 }
             });
             
+            // Action for the search button
             searchButton.setOnAction(e -> {
-                // Switch to the login page when logout is clicked
+                // Switch to the search articles page
                 Stage stage = (Stage) searchButton.getScene().getWindow();  // Get the current stage (window)
-                Search search = new Search(null, null, user);  // Create an instance of the login page (Driver)
+                Search search = new Search(null, null, user);  // Create an instance of the Search page
                 
                 try {
-                    search.start(stage);  // Start the login page
+                    search.start(stage);  // Start the search page
                 } catch (Exception ex) {
                     ex.printStackTrace();  // Handle any exception that occurs during page transition
                 }
             });
 
-            // Add the label and button to the panel
-            panel.getChildren().addAll(welcomeLabel, logoutButton, searchButton);
-            return panel;
+            // Add the label and buttons to the panel
+            panel.getChildren().addAll(welcomeLabel, logoutButton, searchButton);  // Add elements to the VBox
+            return panel;  // Return the panel containing UI elements
         }
     }
 
@@ -113,5 +117,4 @@ public class UserHomePage extends Application {
     public static void main(String[] args) {
         launch(args);  // Launch the JavaFX application
     }
-    
 }
