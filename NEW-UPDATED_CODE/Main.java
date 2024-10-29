@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.UUID;
 
+/** NOTE TO GRADER: THIS IS OUR TESTING/DEBUGGING CLASS AND IS NOT PART OF THE FINAL SUBMISSION**/
 public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
