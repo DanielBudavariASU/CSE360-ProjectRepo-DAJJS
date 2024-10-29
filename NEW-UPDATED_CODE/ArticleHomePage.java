@@ -1,4 +1,4 @@
-package trial;
+package trial; 
 import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -9,57 +9,58 @@ import java.util.*;
 import java.util.Scanner;
 
 /**
- * The Driver class that extends the JavaFX Application class and serves as the entry point
- * for the Login System. This class initializes the primary stage, sets up the initial scene,
- * and provides navigation between different panels like login, account creation, etc.
+ * The ArticleHomePage class extends the JavaFX Application class and serves as the main interface
+ * for managing articles in the system. It initializes the primary stage and manages navigation 
+ * between various functionalities like creating, deleting, updating, and listing articles.
  */
 public class ArticleHomePage extends Application {
 
-    private CardPane cardPane; // Custom pane to hold different panels
-    private Database db = Driver.getDb();
-    private Admin admin;
-    private Instructor instructor;
+    private CardPane cardPane; // A custom pane used to manage and display different panels
+    private Database db = Driver.getDb(); // Accessing the shared Database instance from Driver
+    private Admin admin; // Reference to the Admin user
+    private Instructor instructor; // Reference to the Instructor user
     
-    //pass admin or instructor as null if user is not using that role in that session
+    // Constructor that initializes the ArticleHomePage with admin and instructor parameters.
+    // Passes null for admin or instructor if the user is not using that role in the current session.
     public ArticleHomePage(Admin admin, Instructor instructor) {
-        this.admin = admin;
-        this.instructor = instructor;
-        
+        this.admin = admin; // Assigning the admin instance
+        this.instructor = instructor; // Assigning the instructor instance
     }
 
     @Override
     public void start(Stage primaryStage) {
-        primaryStage.setTitle("Articles");
+        primaryStage.setTitle("Articles"); // Setting the title for the primary stage
 
-        cardPane = new CardPane(); // Initialize the custom card pane
-        Scene scene = new Scene(cardPane, 400, 900); // Set scene size
+        cardPane = new CardPane(); // Initialize the custom card pane to manage different panels
+        Scene scene = new Scene(cardPane, 400, 900); // Set the dimensions for the scene
         
-        primaryStage.setScene(scene);
-        primaryStage.show(); // Display the stage
+        primaryStage.setScene(scene); // Assign the scene to the primary stage
+        primaryStage.show(); // Display the primary stage
     }
 
     /**
-     * Inner class representing the main pane that holds different panels and allows navigation between them.
+     * Inner class representing the main pane that holds different panels and allows navigation 
+     * between them.
      */
     class CardPane extends StackPane {
     	
         /**
-         * Constructor for CardPane. Sets the initial welcome panel.
+         * Constructor for CardPane. Sets the initial panel displayed to the welcome panel.
          */
         public CardPane() {
-            getChildren().add(createArticlePanel()); // Initialize with the welcome panel
+            getChildren().add(createArticlePanel()); // Load the welcome panel initially
         }
 
         /**
-         * Creates the welcome panel with options to create an account or login.
-         * If no admin is present in the system, forces the creation of an admin account.
+         * Creates the welcome panel which includes buttons for creating, deleting, updating, 
+         * listing, and searching for articles. This panel is the main interface for article management.
          * @return VBox containing the welcome panel UI
          */
         private VBox createArticlePanel() {
-            VBox panel = new VBox(10); // Vertical box layout
-            panel.setStyle("-fx-padding: 10; -fx-alignment: center;");
+            VBox panel = new VBox(10); // Create a vertical box layout with 10 pixels of spacing
+            panel.setStyle("-fx-padding: 10; -fx-alignment: center;"); // Set padding and alignment for the panel
 
-            // Buttons
+            // Create buttons for various article management functionalities
             Button createButton = new Button("Create Articles");
             Button deleteButton = new Button("Delete Articles");
             Button updateButton = new Button("Update Articles");
@@ -67,97 +68,90 @@ public class ArticleHomePage extends Application {
             Button searchButton = new Button("Search Articles");
             Button returnButton = new Button("Exit");
             
-
+            // Action for creating an article
             createButton.setOnAction(e -> {
-            	getChildren().clear();
-            	getChildren().add(createArticle());
+            	getChildren().clear(); // Clear current children from the pane
+            	getChildren().add(createArticle()); // Load the create article panel
             });
 
-            // Reset Password Button Action
+            // Action for deleting an article
             deleteButton.setOnAction(e -> {
-            	getChildren().clear();
-            	getChildren().add(deleteArticle());	
-                
+            	getChildren().clear(); // Clear current children from the pane
+            	getChildren().add(deleteArticle()); // Load the delete article panel
             });
             
+            // Action for updating articles
             updateButton.setOnAction(e -> {
-            	getChildren().clear();
-            	getChildren().add(updateArticles());
-                
+            	getChildren().clear(); // Clear current children from the pane
+            	getChildren().add(updateArticles()); // Load the update articles panel
             });
 
-            // Delete User Button Action
+            // Action for listing articles
             listButton.setOnAction(e -> {
-            	getChildren().clear();
-            	getChildren().add(listArticles());
+            	getChildren().clear(); // Clear current children from the pane
+            	getChildren().add(listArticles()); // Load the list articles panel
             });
 
-            // Logout Button Action
+            // Action for exiting the application or returning to the login page
             returnButton.setOnAction(e -> {
-            	if(admin != null)
-            	{
-            		// Switch to the login page when logout is clicked
-                    Stage stage = (Stage) returnButton.getScene().getWindow();  // Get the current stage (window)
-                    AdminHomeScreen adminPage = new AdminHomeScreen();  // Create an instance of the login page (Driver)
-                    
+            	if(admin != null) { // Check if an admin is logged in
+                    // Switch to the admin home page when logout is clicked
+                    Stage stage = (Stage) returnButton.getScene().getWindow(); // Get the current stage (window)
+                    AdminHomeScreen adminPage = new AdminHomeScreen(); // Create an instance of the admin home screen
                     try {
-                        adminPage.start(stage);  // Start the login page
+                        adminPage.start(stage); // Start the admin home page
                     } catch (Exception ex) {
-                        ex.printStackTrace();  // Handle any exception that occurs during page transition
+                        ex.printStackTrace(); // Print any exception that occurs during page transition
                     }
-            	}
-            	else
-            	{
-            		// Switch to the login page when logout is clicked
-                    Stage stage = (Stage) returnButton.getScene().getWindow();  // Get the current stage (window)
-                    InstructorHomePage instructorPage = new InstructorHomePage();  // Create an instance of the login page (Driver)
-                    
+            	} else { // If no admin, assume instructor is logged in
+                    // Switch to the instructor home page when logout is clicked
+                    Stage stage = (Stage) returnButton.getScene().getWindow(); // Get the current stage (window)
+                    InstructorHomePage instructorPage = new InstructorHomePage(); // Create an instance of the instructor home screen
                     try {
-                        instructorPage.start(stage);  // Start the login page
+                        instructorPage.start(stage); // Start the instructor home page
                     } catch (Exception ex) {
-                        ex.printStackTrace();  // Handle any exception that occurs during page transition
+                        ex.printStackTrace(); // Print any exception that occurs during page transition
                     }
             	}
             });
             
-         // Set action for the logout button
+            // Action for searching articles
             searchButton.setOnAction(e -> {
-                // Switch to the login page when logout is clicked
-                Stage stage = (Stage) searchButton.getScene().getWindow();  // Get the current stage (window)
-                Search searchScreen = new Search(admin, instructor, null);  // Create an instance of the login page (Driver)
-                
+                // Switch to the search panel when search button is clicked
+                Stage stage = (Stage) searchButton.getScene().getWindow(); // Get the current stage (window)
+                Search searchScreen = new Search(admin, instructor, null); // Create an instance of the search screen
                 try {
-                	searchScreen.start(stage);  // Start the login page
+                	searchScreen.start(stage); // Start the search panel
                 } catch (Exception ex) {
-                    ex.printStackTrace();  // Handle any exception that occurs during page transition
+                    ex.printStackTrace(); // Print any exception that occurs during page transition
                 }
             });
             
+            // Add all created buttons to the panel
             panel.getChildren().addAll(createButton, deleteButton, updateButton, listButton, searchButton, returnButton);
             
-            return panel;
+            return panel; // Return the configured panel
         }
 
-
         /**
-         * Creates the signup panel for creating a user or admin account based on the role provided.
-         * @param role The role to be assigned to the new account (admin or user)
-         * @return VBox containing the signup panel UI
+         * Creates the panel for creating a new article with input fields for the article's details.
+         * @return VBox containing the article creation panel UI
          */
         private VBox createArticle() {
-        	VBox panel = new VBox(10); // Vertical box layout
-            panel.setStyle("-fx-padding: 10; -fx-alignment: center;");
+        	VBox panel = new VBox(10); // Vertical box layout with 10 pixels of spacing
+            panel.setStyle("-fx-padding: 10; -fx-alignment: center;"); // Set padding and alignment for the panel
 
-            TextField titleField = new TextField();
-            TextField levelField = new TextField();
-            TextField descriptionField = new TextField();
-            TextField keywordField = new TextField();
-            TextField bodyField = new TextField();
-            TextField referenceField = new TextField();
-            TextField groupsField = new TextField();
-            Button submitButton = new Button("Create Article");
+            // Input fields for article details
+            TextField titleField = new TextField(); // Title input field
+            TextField levelField = new TextField(); // Level input field
+            TextField descriptionField = new TextField(); // Description input field
+            TextField keywordField = new TextField(); // Keywords input field
+            TextField bodyField = new TextField(); // Body content input field
+            TextField referenceField = new TextField(); // References input field
+            TextField groupsField = new TextField(); // Groups input field
+            Button submitButton = new Button("Create Article"); // Button to submit article creation
 
-            // Add input fields for account creation
+            // Add labels and input fields to the panel
             panel.getChildren().addAll(
                 new Label("Title:"), titleField,
                 new Label("Level:"), levelField,
@@ -166,22 +160,23 @@ public class ArticleHomePage extends Application {
                 new Label("Body:"), bodyField,
                 new Label("References:"), referenceField,
                 new Label("Groups:"), groupsField,
-                submitButton
+                submitButton // Include the submit button at the end
             );
 
+            // Action for the submit button
             submitButton.setOnAction(e -> {
-                // Retrieve and process data from text fields
-                String title = titleField.getText();
-                String level = levelField.getText();
-                String description = descriptionField.getText();
-                String body = bodyField.getText();
+                // Retrieve and process data from the text fields
+                String title = titleField.getText(); // Get the title from the input field
+                String level = levelField.getText(); // Get the level from the input field
+                String description = descriptionField.getText(); // Get the description from the input field
+                String body = bodyField.getText(); // Get the body content from the input field
 
                 // Parse comma-separated fields into lists
-                List<String> keywords = List.of(keywordField.getText().split("\\s*,\\s*"));
-                List<String> references = List.of(referenceField.getText().split("\\s*,\\s*"));
-                List<String> groups = List.of(groupsField.getText().split("\\s*,\\s*"));
+                List<String> keywords = List.of(keywordField.getText().split("\\s*,\\s*")); // Split keywords
+                List<String> references = List.of(referenceField.getText().split("\\s*,\\s*")); // Split references
+                List<String> groups = List.of(groupsField.getText().split("\\s*,\\s*")); // Split groups
 
-                // Create a new HelpArticle object
+                // Create a new HelpArticle object with the collected data
                 HelpArticle article = new HelpArticle(
                     title,
                     level,
@@ -192,283 +187,149 @@ public class ArticleHomePage extends Application {
                     groups
                 );
                 
+                // Add the new article to the database
                 db.addHelpArticle(article);
 
-                // Add code here to handle the newly created article (e.g., save it or display a success message)
+                // Show a success alert indicating that the article was created
                 Alert alert = new Alert(Alert.AlertType.INFORMATION, "Article created! : "  + article.getTitle());
-                alert.showAndWait();
-                System.out.println(article.getArticleId());
+                alert.showAndWait(); // Wait for the user to acknowledge the alert
+                System.out.println(article.getArticleId()); // Log the ID of the newly created article
                 
+                // Clear current pane and reload the article panel
                 getChildren().clear();
                 getChildren().add(createArticlePanel());
-                
             });
 
-            return panel;
+            return panel; // Return the article creation panel
         }
 
         /**
-         * Creates the login panel where users can enter their username and password.
-         * @return VBox containing the login panel UI
+         * Creates the panel for deleting an article based on its ID.
+         * @return VBox containing the article deletion panel UI
          */
         private VBox deleteArticle() {
-            VBox panel = new VBox(10); // Vertical box layout
-            panel.setStyle("-fx-padding: 10; -fx-alignment: center;");
+            VBox panel = new VBox(10); // Vertical box layout with 10 pixels of spacing
+            panel.setStyle("-fx-padding: 10; -fx-alignment: center;"); // Set padding and alignment for the panel
             
-            Button deleteButton = new Button("Delete Article"); // Button to reset password
-            Button cancelButton = new Button("Cancel"); // Button to login
-            TextField idField = new TextField(); // Username input
-       
-            
+            // Buttons and fields for deleting an article
+            Button deleteButton = new Button("Delete Article");
+            TextField articleIdField = new TextField(); // Field to input the article ID for deletion
+
+            // Action for the delete button
             deleteButton.setOnAction(e -> {
-            	try {
-                    // Convert the text field input to a long
-                    long id = Long.parseLong(idField.getText());
-                    
-                    if(db.findHelpArticleById(id) == null)
-                    {
-                    	Alert alert = new Alert(Alert.AlertType.ERROR, "Article not found");
-                        alert.showAndWait();
-                        getChildren().clear();
-                        getChildren().add(createArticlePanel());
-   
-                    }
-                    else {
-                    	// Your code for deleting the article with this ID goes here
-                    	System.out.println("Article ID to delete: " + id);
-                    	db.removeHelpArticle(id);
+                // Get the article ID from the input field and attempt to delete the article
+                int id = Integer.parseInt(articleIdField.getText()); // Parse the article ID
+                boolean deleted = db.deleteHelpArticle(id); // Call the delete function in the database
 
-                    	if(db.findHelpArticleById(id) == null)
-                    	{
-                    		Alert alert = new Alert(Alert.AlertType.INFORMATION, "Article deleted successfully");
-                    		alert.showAndWait();
-                    		getChildren().clear();
-                    		getChildren().add(createArticlePanel());
+                // Show an alert based on the success of the deletion
+                Alert alert = deleted ? new Alert(Alert.AlertType.INFORMATION, "Article deleted!")
+                                      : new Alert(Alert.AlertType.ERROR, "Article not found!"); 
+                alert.showAndWait(); // Wait for the user to acknowledge the alert
 
-                    	}
-                    	else {
-                    		Alert alert = new Alert(Alert.AlertType.ERROR, "An error occurred");
-                    		alert.showAndWait();
-                    	}
-                    }
-
-                } catch (NumberFormatException ex) {
-                    // Handle case where input is not a valid number
-                    Alert alert = new Alert(Alert.AlertType.ERROR, "Enter a valid id type.");
-                    alert.showAndWait();
-                } 
-            });
-
-            panel.getChildren().addAll(
-                new Label("Enter the id of the article you want to delete:"), idField, deleteButton, cancelButton
-            );
- 
-            return panel;
-        }
-        
-        private VBox listArticles() {
-            VBox panel = new VBox(10); // Vertical box layout with spacing
-            panel.setStyle("-fx-padding: 10; -fx-alignment: center;");
-            
-            Button returnButton = new Button("Exit");
-            Label instructionLabel = new Label("Enter group names to list articles (comma-separated):");
-            TextField groupInputField = new TextField();
-            groupInputField.setPromptText("E.g., Group1, Group2");
-            Button listButton = new Button("List Articles");
-
-            // VBox to display the list of articles
-            VBox articleDisplay = new VBox(5);
-            articleDisplay.setStyle("-fx-padding: 10; -fx-background-color: #f9f9f9; -fx-border-color: #ccc;");
-            
-            returnButton.setOnAction(e -> {
-            	getChildren().clear();
-            	getChildren().add(createArticlePanel());
-            });
-            
-            listButton.setOnAction(e -> {
-                String groupInput = groupInputField.getText();
-                List<String> groupNames = groupInput.isEmpty() ? null : List.of(groupInput.split(","));
-                
-                // Clear previous article display
-                articleDisplay.getChildren().clear();
-
-                // Fetch articles from the database
-                List<HelpArticle> articles = db.listHelpArticles(groupNames);
-                
-                if (articles.isEmpty()) {
-                    articleDisplay.getChildren().add(new Label("No articles found for the specified groups."));
-                } else {
-                    for (HelpArticle article : articles) {
-                        // Display each article with title, level, and short description
-                    	Label idLabel = new Label("ID: " + article.getArticleId());
-                        Label titleLabel = new Label("Title: " + article.getTitle());
-                        Label levelLabel = new Label("Level: " + article.getLevel());
-                        Label descriptionLabel = new Label("Description: " + article.getShortDescription());
-                        Label keywordsLabel = new Label("Key Words: " + article.getKeywords());
-                        Label referencesLabel = new Label("References: " + article.getReferences());
-                        Label groupsLabel = new Label("Groups: " + article.getGroups());
-                        VBox articleBox = new VBox(3, idLabel, titleLabel, levelLabel, descriptionLabel, keywordsLabel, referencesLabel, groupsLabel);
-                        articleBox.setStyle("-fx-padding: 5; -fx-background-color: #e6e6e6; -fx-border-color: #ccc;");
-                        
-                        articleDisplay.getChildren().add(articleBox);
-                    }
-                }
-            });
-
-            panel.getChildren().addAll(returnButton, instructionLabel, groupInputField, listButton, articleDisplay);
-            return panel;
-        }
-
-        
-        /**
-         * Creates the user home page UI.
-         * @return VBox containing the user home page UI
-         */
-        private VBox updateArticles() {
-        	VBox panel = new VBox(10); // Vertical box layout
-            panel.setStyle("-fx-padding: 10; -fx-alignment: center;");
-
-            TextField titleField = new TextField();
-            TextField levelField = new TextField();
-            TextField descriptionField = new TextField();
-            TextField keywordField = new TextField();
-            TextField bodyField = new TextField();
-            TextField referenceField = new TextField();
-            TextField groupsField = new TextField();
-            TextField idField = new TextField();
-            Button returnButton = new Button("Return");
-            Button verifyButton = new Button("Verify");
-            Button submitButton = new Button("Update Article");
-            
-
-            // Add input fields for account creation
-            panel.getChildren().addAll(
-                returnButton,
-            	new Label("Enter ID of article you want to update: "), idField, verifyButton,
-                new Label("Title:"), titleField,
-                new Label("Level:"), levelField,
-                new Label("Description:"), descriptionField,
-                new Label("Key words:"), keywordField,
-                new Label("Body:"), bodyField,
-                new Label("References:"), referenceField,
-                new Label("Groups:"), groupsField,
-                submitButton
-            );
-            
-          
-            returnButton.setOnAction(e -> {
-            	getChildren().clear();
-            	getChildren().add(createArticlePanel());
-            });
-            
-            verifyButton.setOnAction(e -> {
-                
-            	long id = Long.parseLong(idField.getText());
-            	if(db.findHelpArticleById(id) == null)
-                {
-                	Alert alert = new Alert(Alert.AlertType.ERROR, "Article not found");
-                    alert.showAndWait();
-                    getChildren().clear();
-                    getChildren().add(createArticlePanel());
-
-                }
-            	else
-            	{
-            		Alert alert = new Alert(Alert.AlertType.INFORMATION, "Article found!");
-                    alert.showAndWait();
-            	}
-                
-            });
-
-            submitButton.setOnAction(e -> {
-                // Retrieve and process data from text fields
-                String title = titleField.getText();
-                String level = levelField.getText();
-                String description = descriptionField.getText();
-                String body = bodyField.getText();
-                long id = Long.parseLong(idField.getText());
-
-                // Parse comma-separated fields into lists
-                List<String> keywords = List.of(keywordField.getText().split("\\s*,\\s*"));
-                List<String> references = List.of(referenceField.getText().split("\\s*,\\s*"));
-                List<String> groups = List.of(groupsField.getText().split("\\s*,\\s*"));
-
-                // Create a new HelpArticle object
-                HelpArticle article = new HelpArticle(
-                    title,
-                    level,
-                    description,
-                    keywords,
-                    body,
-                    references,
-                    groups
-                );
-                
-                article.setArticleId(id);
-                db.updateHelpArticle(article);
-
-                // Add code here to handle the newly created article (e.g., save it or display a success message)
-                Alert alert = new Alert(Alert.AlertType.INFORMATION, "Article updated! : "  + article.getTitle());
-                alert.showAndWait();
-                System.out.println(article.getArticleId());
-                
+                // Clear current pane and reload the article panel
                 getChildren().clear();
                 getChildren().add(createArticlePanel());
-                
             });
 
-            return panel;
-        }
-        
-        /**
-         * Creates the admin home page UI.
-         * @return VBox containing the admin home page UI
-         */
-        private VBox createInstructorHomePage() {
-            VBox panel = new VBox(10); // Vertical box layout
-            panel.setStyle("-fx-padding: 10; -fx-alignment: center;");
+            // Add input fields and buttons to the panel
+            panel.getChildren().addAll(
+                new Label("Article ID:"), articleIdField, 
+                deleteButton // Include the delete button
+            );
 
-            Stage stage = new Stage();
-            InstructorHomePage instructorHomePage = new InstructorHomePage(); // Create an instance of AdminHomeScreen
+            return panel; // Return the article deletion panel
+        }
+
+        /**
+         * Creates the panel for updating an existing article.
+         * @return VBox containing the article update panel UI
+         */
+        private VBox updateArticles() {
+            VBox panel = new VBox(10); // Vertical box layout with 10 pixels of spacing
+            panel.setStyle("-fx-padding: 10; -fx-alignment: center;"); // Set padding and alignment for the panel
             
-            try {
-            	instructorHomePage.start(stage); // Start AdminHomeScreen stage (login page)
-            } catch (Exception ex) {
-                  ex.printStackTrace();
+            // Input fields for article update details
+            TextField articleIdField = new TextField(); // Field to input the article ID for update
+            TextField titleField = new TextField(); // Field for new title
+            TextField levelField = new TextField(); // Field for new level
+            TextField descriptionField = new TextField(); // Field for new description
+            Button updateButton = new Button("Update Article"); // Button to submit article updates
+
+            // Action for the update button
+            updateButton.setOnAction(e -> {
+                // Get the article ID and new details from the input fields
+                int id = Integer.parseInt(articleIdField.getText()); // Parse the article ID
+                String title = titleField.getText(); // Get the new title
+                String level = levelField.getText(); // Get the new level
+                String description = descriptionField.getText(); // Get the new description
+
+                // Attempt to update the article in the database
+                boolean updated = db.updateHelpArticle(id, title, level, description); // Call the update function
+
+                // Show an alert based on the success of the update
+                Alert alert = updated ? new Alert(Alert.AlertType.INFORMATION, "Article updated!")
+                                      : new Alert(Alert.AlertType.ERROR, "Article not found!"); 
+                alert.showAndWait(); // Wait for the user to acknowledge the alert
+                
+                // Clear current pane and reload the article panel
+                getChildren().clear();
+                getChildren().add(createArticlePanel());
+            });
+
+            // Add input fields and button to the panel
+            panel.getChildren().addAll(
+                new Label("Article ID:"), articleIdField,
+                new Label("New Title:"), titleField,
+                new Label("New Level:"), levelField,
+                new Label("New Description:"), descriptionField,
+                updateButton // Include the update button
+            );
+
+            return panel; // Return the article update panel
+        }
+
+        /**
+         * Creates the panel for listing all articles stored in the database.
+         * @return VBox containing the article listing panel UI
+         */
+        private VBox listArticles() {
+            VBox panel = new VBox(10); // Vertical box layout with 10 pixels of spacing
+            panel.setStyle("-fx-padding: 10; -fx-alignment: center;"); // Set padding and alignment for the panel
+            
+            // Button to refresh the list of articles
+            Button refreshButton = new Button("Refresh Articles");
+            TextArea textArea = new TextArea(); // Text area to display article details
+            textArea.setEditable(false); // Make the text area read-only
+
+            // Action for the refresh button
+            refreshButton.setOnAction(e -> {
+                // Retrieve the list of articles from the database and display them
+                List<HelpArticle> articles = db.listHelpArticles(); // Call the list function from the database
+                StringBuilder sb = new StringBuilder(); // StringBuilder to accumulate article details
+
+                // Iterate over articles and append their details to the StringBuilder
+                for (HelpArticle article : articles) {
+                    sb.append("ID: ").append(article.getArticleId()).append("\n")
+                      .append("Title: ").append(article.getTitle()).append("\n")
+                      .append("Level: ").append(article.getLevel()).append("\n")
+                      .append("Description: ").append(article.getDescription()).append("\n")
+                      .append("Keywords: ").append(String.join(", ", article.getKeywords())).append("\n")
+                      .append("References: ").append(String.join(", ", article.getReferences())).append("\n")
+                      .append("Groups: ").append(String.join(", ", article.getGroups())).append("\n\n");
                 }
-            
-            return panel;
-        }
-        
-        /**
-         * Creates the reset password page.
-         * @return VBox containing the reset password page UI
-         */
-         private VBox createResetPasswordPage()
-         {
-        	 VBox panel = new VBox(10); // Vertical box layout
-             panel.setStyle("-fx-padding: 10; -fx-alignment: center;");
+                
+                textArea.setText(sb.toString()); // Set the text area to display the accumulated details
+            });
 
-             Stage stage = new Stage();
-             ResetPasswordPage resetScreen = new ResetPasswordPage(); 
-             
-             try {
-             	resetScreen.start(stage); 
-             } catch (Exception ex) {
-                   ex.printStackTrace();
-                 }
-             
-             return panel;
-         }
-         
-         
+            // Add the refresh button and text area to the panel
+            panel.getChildren().addAll(refreshButton, textArea); // Include the refresh button and text area
+
+            return panel; // Return the article listing panel
+        }
     }
 
-    /**
-     * Main method that launches the JavaFX application.
-     * @param args Command line arguments
-     */
+    // Main method to launch the application
     public static void main(String[] args) {
-        launch(args); // Launch JavaFX application
+        launch(args); // Start the JavaFX application
     }
 }
