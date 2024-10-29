@@ -1,9 +1,12 @@
 package trial;
 
+import java.util.*;
+import java.io.*;
+
 /**
  * The Testing class simulates automated testing for the Admin, Invitation, and User system.
  * It defines various test cases to validate different system behaviors such as creating an admin,
- * using invitations, and resetting passwords.
+ * using invitations, resetting passwords, and backing up articles.
  * 
  * The class uses a simple approach of counting the number of passed and failed tests based
  * on predefined expectations for each test case.
@@ -15,13 +18,16 @@ public class Testing {
 
     /**
      * Main entry point for running the test cases.
-     * Tests various functionalities including admin creation, invitation use, and password reset.
+     * Tests various functionalities including admin creation, invitation use, password reset,
+     * and article backup.
      *
      * @param args Command-line arguments (not used).
      */
     public static void main(String[] args) {
         System.out.println("____________________________________________________________________________");
-        System.out.println("\nTesting Automation for Admin, Invitation, and User System");
+        System.out.println("\nTesting Automation for Admin, Invitation, User, and HelpArticle System");
+
+        // Existing test cases...
 
         // Test case 1: Admin creation when no admin exists
         performTestCase(1, "Admin Creation Test (Successful)", new TestScenario() {
@@ -127,6 +133,49 @@ public class Testing {
                 return !passwordResetSuccess;  // Test success if reset fails
             }
         }, true);
+        // New Test case 7: Backup all articles successfully
+        performTestCase(7, "Backup Test (Successful)", new TestScenario() {
+            @Override
+            public boolean runTest(Database db) {
+                // Mock articles and groups
+                HelpArticle article1 = new HelpArticle(1, "Title1", "Content1");
+                HelpArticle article2 = new HelpArticle(2, "Title2", "Content2");
+                HelpGroup group = new HelpGroup("Group1", Arrays.asList(article1, article2));
+                db.addGroup(group);
+
+                // Simulate the backup process
+                try (ObjectOutputStream out = mock(ObjectOutputStream.class)) {
+                    db.backupHelpArticles("testBackupFile", null);  // Backup all articles
+                    verify(out).writeObject(Arrays.asList(article1, article2));
+                    return true;  // Backup succeeded
+                } catch (IOException e) {
+                    return false;  // Test fails if exception occurs
+                }
+            }
+        }, true);
+
+        // New Test case 8: Backup with duplicate articles (should avoid duplicates)
+        performTestCase(8, "Backup Test (No Duplicates)", new TestScenario() {
+            @Override
+            public boolean runTest(Database db) {
+                // Mock articles with same content but different IDs
+                HelpArticle article1 = new HelpArticle(1, "DuplicateTitle", "SameContent");
+                HelpArticle article2 = new HelpArticle(2, "DuplicateTitle", "SameContent");  // Different ID
+
+                // Mock group containing both articles
+                HelpGroup group = new HelpGroup("GroupWithDuplicates", Arrays.asList(article1, article2));
+                db.addGroup(group);
+
+                // Simulate the backup process
+                try (ObjectOutputStream out = mock(ObjectOutputStream.class)) {
+                    db.backupHelpArticles("testBackupFile", null);  // Backup all articles
+                    verify(out).writeObject(Arrays.asList(article1, article2));  // Ensure both are backed up
+                    return true;
+                } catch (IOException e) {
+                    return false;
+                }
+            }
+        }, true);
 
         // Summary of test results
         System.out.println("____________________________________________________________________________");
@@ -169,4 +218,3 @@ public class Testing {
         boolean runTest(Database db);  // Defines the test logic for a particular test scenario
     }
 }
-
