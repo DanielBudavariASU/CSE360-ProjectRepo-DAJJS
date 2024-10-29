@@ -199,257 +199,261 @@ public class Database {
     // --------------------------------------------------------------------------------------------------------------------------------
     
     public void addHelpArticle(HelpArticle article) {
-        // Ensure no duplicates based on articleId
-    	article.setArticleId(articleIdCounter++);
-    	
-    	
-        if (helpArticles.stream().noneMatch(a -> a.getArticleId() == article.getArticleId())) {
-            helpArticles.add(article);
-            saveHelpArticles();  // Persist the updated list
-            // Update groups with the new article
-            for (String groupName : article.getGroups()) {
-                HelpGroup group = findOrCreateGroup(groupName);  // Find or create the group
-                group.addArticle(article);  // Add the article to the group
-            }
-            
-            saveHelpGroups();  // Persist the updated group list
-            
-            System.out.println("Help article added successfully!");
-        } else {
-            System.out.println("Error: A help article with this ID already exists.");
-        }
-    }
-
-    public void removeHelpArticle(long articleId) {
-        HelpArticle articleToRemove = helpArticles.stream()
-                .filter(article -> article.getArticleId() == articleId)
-                .findFirst()
-                .orElse(null);
-
-        if (articleToRemove != null) {
-            // Remove the article from the helpArticles list
-            helpArticles.remove(articleToRemove);
-            saveHelpArticles();  // Persist the updated list
-
-            // Remove the article from all its associated groups
-            for (String groupName : articleToRemove.getGroups()) {
-                HelpGroup group = findGroupByName(groupName);
-                if (group != null) {
-                    group.removeArticle(articleToRemove);  // Remove article from group
-                    if (group.getArticles().isEmpty()) {
-                        helpGroups.remove(group);  // Remove group if it has no articles left
-                    }
-                }
-            }
-
-            saveHelpGroups();  // Persist the updated group list
-            System.out.println("Help article removed successfully!");
-        } else {
-            System.out.println("Error: Help article not found.");
-        }
-    }
+    // Ensure no duplicates based on articleId
+    article.setArticleId(articleIdCounter++); // Assign a unique article ID
     
-    public void updateHelpArticle(HelpArticle updatedArticle) {
-        for (int i = 0; i < helpArticles.size(); i++) {
-            if (helpArticles.get(i).getArticleId() == updatedArticle.getArticleId()) {
-                HelpArticle oldArticle = helpArticles.get(i);
-                System.out.println("1");
-                // Update the helpArticles list with the new article
-                helpArticles.set(i, updatedArticle);
-                saveHelpArticles();  // Persist the updated list
-                System.out.println("2");
-                // Remove old article from its previous groups
-                for (String oldGroupName : oldArticle.getGroups()) {
-                	System.out.println("3");
-                    HelpGroup oldGroup = findGroupByName(oldGroupName);
-                    if (oldGroup != null) {
-                        oldGroup.removeArticle(oldArticle);
-                        if (oldGroup.getArticles().isEmpty()) {
-                            helpGroups.remove(oldGroup);  // Remove group if empty
-                        }
-                    }
-                }
-
-                // Add updated article to the new/updated groups
-                for (String newGroupName : updatedArticle.getGroups()) {
-                    HelpGroup newGroup = findOrCreateGroup(newGroupName);  // Find or create the group
-                    newGroup.addArticle(updatedArticle);  // Add article to the new group
-                }
-
-                saveHelpGroups();  // Persist the updated group list
-                System.out.println("Help article updated successfully!");
-                return;
-            }
-        }
-        System.out.println("Error: Help article not found.");
-    }
-    
-    private HelpGroup findOrCreateGroup(String groupName) {
-        for (HelpGroup group : helpGroups) {
-            if (group.getGroupName().equals(groupName)) {
-                return group;  // Group found, return it
-            }
+    if (helpArticles.stream().noneMatch(a -> a.getArticleId() == article.getArticleId())) {
+        helpArticles.add(article); // Add the new article to the list
+        saveHelpArticles();  // Persist the updated list
+        
+        // Update groups with the new article
+        for (String groupName : article.getGroups()) {
+            HelpGroup group = findOrCreateGroup(groupName);  // Find or create the group
+            group.addArticle(article);  // Add the article to the group
         }
         
-        // Group doesn't exist, create a new one
-        HelpGroup newGroup = new HelpGroup(groupName);
-        helpGroups.add(newGroup);
-        return newGroup;
+        saveHelpGroups();  // Persist the updated group list
+        
+        System.out.println("Help article added successfully!");
+    } else {
+        System.out.println("Error: A help article with this ID already exists.");
     }
+}
 
-    private HelpGroup findGroupByName(String groupName) {
-        for (HelpGroup group : helpGroups) {
-            if (group.getGroupName().equals(groupName)) {
-                return group;
-            }
-        }
-        return null;  // Group not found
-    }
-
-    public HelpArticle findHelpArticleById(long articleId) {
-        return helpArticles.stream()
+public void removeHelpArticle(long articleId) {
+    // Locate the article to remove by its ID
+    HelpArticle articleToRemove = helpArticles.stream()
             .filter(article -> article.getArticleId() == articleId)
             .findFirst()
             .orElse(null);
-    }
 
-    public List<HelpArticle> listHelpArticles(List<String> groupNames) {
-    	
-        // If the argument list is empty or null, return all articles
-        if (groupNames == null || groupNames.isEmpty()) {
-            return helpArticles;  // Return all articles if no group is specified
-        }
+    if (articleToRemove != null) {
+        // Remove the article from the helpArticles list
+        helpArticles.remove(articleToRemove);
+        saveHelpArticles();  // Persist the updated list
 
-        List<HelpArticle> filteredArticles = new ArrayList<>();
-        // Iterate over all the help groups
-        for (HelpGroup group : helpGroups) {
-            if (groupNames.contains(group.getGroupName())) {
-                // Add all articles in this group to the filteredArticles list
-                for (HelpArticle article : group.getArticles()) {
-                    if (!filteredArticles.contains(article)) {
-                        filteredArticles.add(article);  // Avoid duplicates
-                    }
+        // Remove the article from all its associated groups
+        for (String groupName : articleToRemove.getGroups()) {
+            HelpGroup group = findGroupByName(groupName);
+            if (group != null) {
+                group.removeArticle(articleToRemove);  // Remove article from group
+                if (group.getArticles().isEmpty()) {
+                    helpGroups.remove(group);  // Remove group if it has no articles left
                 }
             }
         }
-        
-        System.out.println(filteredArticles);
-        return filteredArticles;
-    }
-    
-    /**
-     * Searches help articles based on optional ID, title, and group criteria.
-     *
-     * @param articleId Optional article ID to search by (set to -1 if not searching by ID).
-     * @param title Optional title substring to search by (null if not searching by title).
-     * @param groupNames Optional list of group names to search by (null if not searching by groups).
-     * @return A list of help articles matching the provided criteria.
-     */
-    public List<HelpArticle> searchHelpArticles(long articleId, String title, List<String> groupNames) {
-        List<HelpArticle> filteredArticles = new ArrayList<>();
 
-        // Filter by ID if provided
-        if (articleId > 0) {
-            HelpArticle article = findHelpArticleById(articleId);
-            if (article != null) {
-                filteredArticles.add(article);
-            }
-            return filteredArticles; // Return immediately if searching by ID only
-        }
-
-        // Filter by title and groups
-        for (HelpArticle article : helpArticles) {
-            boolean matchesTitle = (title == null || article.getTitle().toLowerCase().contains(title.toLowerCase()));
-            boolean matchesGroup = (groupNames == null || groupNames.isEmpty() || 
-                                   article.getGroups().stream().anyMatch(groupNames::contains));
-
-            if (matchesTitle && matchesGroup) {
-                filteredArticles.add(article);
-            }
-        }
-        return filteredArticles;
-    }
-    
-    public void addHelpGroup(HelpGroup group) {
-        helpGroups.add(group);
         saveHelpGroups();  // Persist the updated group list
-        System.out.println("Help group added successfully!");
+        System.out.println("Help article removed successfully!");
+    } else {
+        System.out.println("Error: Help article not found.");
     }
+}
 
-    public void removeHelpGroup(String groupName) {
-        helpGroups.removeIf(group -> group.getGroupName().equals(groupName));
-        saveHelpGroups();  // Persist the updated group list
-        System.out.println("Help group removed successfully!");
-    }
-
-    public void backupHelpArticles(String fileName, List<String> groupNames) {
-        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(fileName))) {
-            List<HelpArticle> articlesToBackup;
-
-            if (groupNames == null || groupNames.isEmpty()) {
-                // Backup all articles if no group is specified
-                articlesToBackup = helpArticles;
-            } else {
-                // Filter articles by the specified groups
-                articlesToBackup = new ArrayList<>();
-                for (String groupName : groupNames) {
-                    HelpGroup group = findGroupByName(groupName);
-                    if (group != null) {
-                        for (HelpArticle article : group.getArticles()) {
-                            if (!articlesToBackup.contains(article)) {
-                                articlesToBackup.add(article);  // Avoid duplicates
-                            }
-                        }
-                    }
-                }
-            }
-
-            out.writeObject(articlesToBackup);
-            System.out.println("Help articles backed up successfully to " + fileName);
-        } catch (IOException e) {
-            System.out.println("Error backing up help articles: " + e.getMessage());
-        }
-    }
-
-
-    public void restoreHelpArticles(String fileName, boolean merge) {
-        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(fileName))) {
-            List<HelpArticle> restoredArticles = (List<HelpArticle>) in.readObject();
+public void updateHelpArticle(HelpArticle updatedArticle) {
+    // Locate the article by its ID for updating
+    for (int i = 0; i < helpArticles.size(); i++) {
+        if (helpArticles.get(i).getArticleId() == updatedArticle.getArticleId()) {
+            HelpArticle oldArticle = helpArticles.get(i);
+            System.out.println("1");
+            // Update the helpArticles list with the new article
+            helpArticles.set(i, updatedArticle);
+            saveHelpArticles();  // Persist the updated list
+            System.out.println("2");
             
-            if (merge) {
-                // Merge restored articles with current list (without duplicates)
-                for (HelpArticle article : restoredArticles) {
-                    if (findHelpArticleById(article.getArticleId()) == null) {
-                        helpArticles.add(article);
+            // Remove old article from its previous groups
+            for (String oldGroupName : oldArticle.getGroups()) {
+                System.out.println("3");
+                HelpGroup oldGroup = findGroupByName(oldGroupName);
+                if (oldGroup != null) {
+                    oldGroup.removeArticle(oldArticle);
+                    if (oldGroup.getArticles().isEmpty()) {
+                        helpGroups.remove(oldGroup);  // Remove group if empty
+                    }
+                }
+            }
 
-                        // Update helpGroups to reflect the restored article's group memberships
-                        for (String groupName : article.getGroups()) {
-                            HelpGroup group = findOrCreateGroup(groupName);
-                            group.addArticle(article);
+            // Add updated article to the new/updated groups
+            for (String newGroupName : updatedArticle.getGroups()) {
+                HelpGroup newGroup = findOrCreateGroup(newGroupName);  // Find or create the group
+                newGroup.addArticle(updatedArticle);  // Add article to the new group
+            }
+
+            saveHelpGroups();  // Persist the updated group list
+            System.out.println("Help article updated successfully!");
+            return;
+        }
+    }
+    System.out.println("Error: Help article not found.");
+}
+
+private HelpGroup findOrCreateGroup(String groupName) {
+    // Search for an existing group by its name
+    for (HelpGroup group : helpGroups) {
+        if (group.getGroupName().equals(groupName)) {
+            return group;  // Group found, return it
+        }
+    }
+    
+    // Group doesn't exist, create a new one
+    HelpGroup newGroup = new HelpGroup(groupName);
+    helpGroups.add(newGroup); // Add new group to the list
+    return newGroup;
+}
+
+private HelpGroup findGroupByName(String groupName) {
+    // Locate a group by its name
+    for (HelpGroup group : helpGroups) {
+        if (group.getGroupName().equals(groupName)) {
+            return group;
+        }
+    }
+    return null;  // Group not found
+}
+
+public HelpArticle findHelpArticleById(long articleId) {
+    // Find and return an article by its ID
+    return helpArticles.stream()
+        .filter(article -> article.getArticleId() == articleId)
+        .findFirst()
+        .orElse(null);
+}
+
+public List<HelpArticle> listHelpArticles(List<String> groupNames) {
+    // Return all articles if no group names provided
+    if (groupNames == null || groupNames.isEmpty()) {
+        return helpArticles;  // Return all articles if no group is specified
+    }
+
+    List<HelpArticle> filteredArticles = new ArrayList<>();
+    // Iterate over all the help groups
+    for (HelpGroup group : helpGroups) {
+        if (groupNames.contains(group.getGroupName())) {
+            // Add all articles in this group to the filteredArticles list
+            for (HelpArticle article : group.getArticles()) {
+                if (!filteredArticles.contains(article)) {
+                    filteredArticles.add(article);  // Avoid duplicates
+                }
+            }
+        }
+    }
+    
+    System.out.println(filteredArticles); // Output filtered articles for verification
+    return filteredArticles; // Return the list of filtered articles
+}
+
+/**
+ * Searches help articles based on optional ID, title, and group criteria.
+ *
+ * @param articleId Optional article ID to search by (set to -1 if not searching by ID).
+ * @param title Optional title substring to search by (null if not searching by title).
+ * @param groupNames Optional list of group names to search by (null if not searching by groups).
+ * @return A list of help articles matching the provided criteria.
+ */
+public List<HelpArticle> searchHelpArticles(long articleId, String title, List<String> groupNames) {
+    List<HelpArticle> filteredArticles = new ArrayList<>();
+
+    // Filter by ID if provided
+    if (articleId > 0) {
+        HelpArticle article = findHelpArticleById(articleId);
+        if (article != null) {
+            filteredArticles.add(article);
+        }
+        return filteredArticles; // Return immediately if searching by ID only
+    }
+
+    // Filter by title and groups
+    for (HelpArticle article : helpArticles) {
+        boolean matchesTitle = (title == null || article.getTitle().toLowerCase().contains(title.toLowerCase()));
+        boolean matchesGroup = (groupNames == null || groupNames.isEmpty() || 
+                               article.getGroups().stream().anyMatch(groupNames::contains));
+
+        if (matchesTitle && matchesGroup) {
+            filteredArticles.add(article); // Add to results if it matches both criteria
+        }
+    }
+    return filteredArticles; // Return the list of filtered articles
+}
+
+public void addHelpGroup(HelpGroup group) {
+    helpGroups.add(group); // Add the new group to the list
+    saveHelpGroups();  // Persist the updated group list
+    System.out.println("Help group added successfully!");
+}
+
+public void removeHelpGroup(String groupName) {
+    helpGroups.removeIf(group -> group.getGroupName().equals(groupName)); // Remove the group by name
+    saveHelpGroups();  // Persist the updated group list
+    System.out.println("Help group removed successfully!");
+}
+
+public void backupHelpArticles(String fileName, List<String> groupNames) {
+    try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(fileName))) {
+        List<HelpArticle> articlesToBackup;
+
+        if (groupNames == null || groupNames.isEmpty()) {
+            // Backup all articles if no group is specified
+            articlesToBackup = helpArticles;
+        } else {
+            // Filter articles by the specified groups
+            articlesToBackup = new ArrayList<>();
+            for (String groupName : groupNames) {
+                HelpGroup group = findGroupByName(groupName);
+                if (group != null) {
+                    for (HelpArticle article : group.getArticles()) {
+                        if (!articlesToBackup.contains(article)) {
+                            articlesToBackup.add(article);  // Avoid duplicates
                         }
                     }
                 }
-            } else {
-                // Replace the current list
-                helpArticles = restoredArticles;
+            }
+        }
 
-                // Clear current groups and rebuild them based on restored articles
-                helpGroups.clear();
-                for (HelpArticle article : restoredArticles) {
+        out.writeObject(articlesToBackup); // Write the selected articles to file
+        System.out.println("Help articles backed up successfully to " + fileName);
+    } catch (IOException e) {
+        System.out.println("Error backing up help articles: " + e.getMessage());
+    }
+}
+
+public void restoreHelpArticles(String fileName, boolean merge) {
+    try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(fileName))) {
+        List<HelpArticle> restoredArticles = (List<HelpArticle>) in.readObject();
+        
+        if (merge) {
+            // Merge restored articles with current list (without duplicates)
+            for (HelpArticle article : restoredArticles) {
+                if (findHelpArticleById(article.getArticleId()) == null) {
+                    helpArticles.add(article);
+
+                    // Update helpGroups to reflect the restored article's group memberships
                     for (String groupName : article.getGroups()) {
                         HelpGroup group = findOrCreateGroup(groupName);
                         group.addArticle(article);
                     }
                 }
             }
+        } else {
+            // Replace the current list
+            helpArticles = restoredArticles;
 
-            saveHelpArticles();  // Persist the updated articles list
-            saveHelpGroups();    // Persist the updated groups list
-            System.out.println("Help articles restored successfully from " + fileName);
-        } catch (IOException | ClassNotFoundException e) {
-            System.out.println("Error restoring help articles: " + e.getMessage());
+            // Clear current groups and rebuild them based on restored articles
+            helpGroups.clear();
+            for (HelpArticle article : restoredArticles) {
+                for (String groupName : article.getGroups()) {
+                    HelpGroup group = findOrCreateGroup(groupName);
+                    group.addArticle(article);
+                }
+            }
         }
+
+        saveHelpArticles(); // Persist the updated article list
+        saveHelpGroups();  // Persist the updated group list
+        System.out.println("Help articles restored successfully from " + fileName);
+    } catch (IOException | ClassNotFoundException e) {
+        System.out.println("Error restoring help articles: " + e.getMessage());
     }
+}
 
 
     private void saveHelpArticles() {
