@@ -90,7 +90,7 @@ public class AdminHomeScreen extends Application {
                 alert.showAndWait();
             } else {
                 Password OTP = new Password();
-                String pass = OTP.setOTP();  // Set OTP
+                String pass = OTP.setOTP();  // Set OTP for password reset
                 String tempPassword = OTP.getOTP();
                 date = OTP.setExpiration(); 
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -157,18 +157,17 @@ public class AdminHomeScreen extends Application {
             }
         });
         
-     // Set action for the logout button
+     // Set action for the article button
         articleButton.setOnAction(e -> {
-            // Switch to the login page when logout is clicked
+            // Switch to the article page when the button is clicked
             Stage stage = (Stage) articleButton.getScene().getWindow();  // Get the current stage (window)
-            ArticleHomePage articlePage = new ArticleHomePage(admin, null);  // Create an instance of the login page (Driver)
-            
+            ArticleHomePage articlePage = new ArticleHomePage(admin, null);  // Create an instance of the article page
             try {
-                articlePage.start(stage);  // Start the login page
+                articlePage.start(stage);  // Start the article page
             } catch (Exception ex) {
                 ex.printStackTrace();  // Handle any exception that occurs during page transition
             }
-        });
+        });;
         
 
         // Backup Button Action
@@ -193,7 +192,7 @@ public class AdminHomeScreen extends Application {
 
 
 
-        // Layout
+        // Layout of the vbox with all the necessary buttons
         VBox layout = new VBox(10, inviteCodeInput, inviteUserButton, resetUserInput, resetPasswordButton, deleteUserInput, 
         						deleteUserButton, listUsersButton, articleButton, backupButton, restoreButton, logoutButton);
         
@@ -202,7 +201,12 @@ public class AdminHomeScreen extends Application {
         primaryStage.show();
     }
     
- // Backup page for AdminHomeScreen
+     /**
+     * Creates the backup page for the AdminHomeScreen.
+     * Allows the admin to input group names and file names for backup.
+     * 
+     * @return VBox containing the backup page layout.
+     */
     private VBox createBackupPage() {
         VBox panel = new VBox(10);
         panel.setStyle("-fx-padding: 10; -fx-alignment: center;");
@@ -231,7 +235,12 @@ public class AdminHomeScreen extends Application {
         return panel;
     }
 
-    // Restore page for AdminHomeScreen
+    /**
+     * Creates the restore page for the AdminHomeScreen.
+     * Allows the admin to select a file to restore articles from.
+     * 
+     * @return VBox containing the restore page layout.
+     */
     private VBox createRestorePage() {
         VBox panel = new VBox(10);
         panel.setStyle("-fx-padding: 10; -fx-alignment: center;");
