@@ -1,1 +1,14 @@
+New classes:
+Search.java
+InstructorHomePage.java
+ArticleHomePage.java
 
+Existing Classes:
+Database.java
+	- searchHelpArticles(long articleId, String title, List<String> groupNames) 
+Driver.java
+	- createUserHomePage()
+	- createInstructorHomePage()
+AdminHomeScreen.java
+	- createRestorePage()
+	- createBackupPage()
