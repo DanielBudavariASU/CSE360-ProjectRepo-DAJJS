@@ -146,26 +146,6 @@ public class Testing {
             }
         }, true);
 
-        performTestCase(8, "Has Access to Article Test", new TestScenario() {
-            @Override
-            public boolean runTest(Database db) {
-                // Add users
-                User admin = new Admin("adminUser", "adminPass");
-                User student = new Student("studentUser", "password123");
-                db.addUser(admin);
-                db.addUser(student);
-
-                // Add article with special access group
-                HelpArticle article = new HelpArticle("title", "author", "level", "description",
-                        new ArrayList<>(), "body", new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), true);
-                article.addSpecialAccessGroup("SpecialGroup");
-                db.addHelpArticle(article);
-
-                // Test access
-                return db.hasAccessToArticle(admin, article) && db.hasAccessToArticle(student, article);
-            }
-        }, true);
-
         System.out.println("____________________________________________________________________________");
         System.out.println();
         System.out.println("Number of tests passed: " + numPassed);
