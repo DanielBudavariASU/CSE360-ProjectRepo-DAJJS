@@ -1,0 +1,117 @@
+package trail;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import java.util.ArrayList;
+import java.util.List;
+
+class AdminTest {
+    private Admin admin;
+    private Database mockDatabase;
+    private HelpArticle article1, article2;
+    private SpecialAccessGroup group;
+
+    @BeforeEach
+    void setUp() {
+        admin = new Admin("adminUser", "password");
+        mockDatabase = new Database();
+        
+        // Add sample help articles
+        article1 = new HelpArticle(
+        	    "Title1",                // Title
+        	    "Author1",               // Author
+        	    "Beginner",              // Level
+        	    "Abstract1",             // Short Description
+        	    List.of("Keyword1"),     // Keywords
+        	    "Body1",                 // Body
+        	    List.of("Reference1"),   // References
+        	    List.of("Group1"),       // Groups
+        	    List.of("SpecialGroup1"),// Special Groups
+        	    false                    // Is in Special Access Group
+        	);
+
+        	article2 = new HelpArticle(
+        	    "Title2",                // Title
+        	    "Author2",               // Author
+        	    "Intermediate",          // Level
+        	    "Abstract2",             // Short Description
+        	    List.of("Keyword2"),     // Keywords
+        	    "Body2",                 // Body
+        	    List.of("Reference2"),   // References
+        	    List.of("Group2"),       // Groups
+        	    List.of("SpecialGroup2"),// Special Groups
+        	    true                     // Is in Special Access Group
+        	);
+
+        mockDatabase.addHelpArticle(article1);
+        mockDatabase.addHelpArticle(article2);
+
+        // Add a special access group with students
+        group = new SpecialAccessGroup("Group1");
+        Student student1 = new Student("student1", "testpass1");
+        Student student2 = new Student("student2", "testpass2");
+        group.addStudent(student1);
+        group.addStudent(student2);
+        mockDatabase.addSpecialAccessGroup(group);
+    }
+
+    @Test
+    void testListAllHelpArticles() {
+        List<HelpArticle> articles = admin.listHelpArticles(mockDatabase, null);
+        assertEquals(2, articles.size());
+        assertTrue(articles.contains(article1));
+        assertTrue(articles.contains(article2));
+    }
+
+    @Test
+    void testFindHelpArticleById() {
+        HelpArticle foundArticle = mockDatabase.findHelpArticleById(1);
+        assertNotNull(foundArticle);
+        assertEquals("Title1", foundArticle.getTitle());
+    }
+
+    @Test
+    void testGetAllStudentsInSpecialAccessGroup() {
+        List<String> students = admin.viewStudentsInSpecialAccessGroup(mockDatabase, "Group1");
+        assertNotNull(students);
+        assertEquals(2, students.size());
+        assertTrue(students.contains("student1"));
+        assertTrue(students.contains("student2"));
+    }
+
+    @Test
+    void testDisplayHelpArticle() {
+        // Create a sample HelpArticle using the constructor with the new parameters
+        HelpArticle article = new HelpArticle(
+            "Title1",                      // title
+            "Author1",                     // author
+            "Beginner",                    // level
+            "Abstract1",                   // shortDescription
+            List.of("Keyword1"),           // keywords
+            "Body1",                       // body
+            List.of("Reference1"),         // references
+            List.of("Group1"),             // groups
+            List.of("SpecialGroup1"),      // specialAccessGroups
+            false                          // isInSpecialAccessGroup
+        );
+
+        // Assuming mockDatabase has a method to return the correct article by ID
+        mockDatabase.addHelpArticle(article); // Adding the article to the mock database (if required)
+
+        HelpArticle foundArticle = mockDatabase.findHelpArticleById(1);
+        
+        // Ensure the article is not null
+        assertNotNull(foundArticle);
+        
+        
+        String displaytitle = foundArticle.getTitle();
+        String displaybody = foundArticle.getBody();
+        
+        // Check if the display contains the expected information
+        assertTrue(displaytitle.contains("Title1"));
+        assertTrue(displaybody.contains("Body1"));
+    }
+
+}
+
