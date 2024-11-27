@@ -1,3 +1,4 @@
+package Phase1;
 import static org.junit.Assert.*;
 import java.util.List;
 import org.junit.Test;
@@ -29,6 +30,22 @@ public class JUnit_Testing {
 
 	@Test
     public void testListAllUsers() {
+		mockDatabase = new Database();
+        mockGroup = new SpecialAccessGroup("SpecialGroup");
+
+        // Mock users and groups for testing
+        Admin admin = new Admin("adminUser", "AdminPassword");
+        Student student = new Student("studentUser", "StudentPassword");
+        Instructor instructor = new Instructor("instructorUser", "InstructorPassword");
+
+        mockDatabase.addUser(admin);
+        mockDatabase.addUser(student);
+        mockDatabase.addUser(instructor);
+
+        mockGroup.addAdmin(admin);
+        mockGroup.addStudent(student);
+        mockGroup.addInstructor(instructor);
+        
     	System.out.println("\nStarting: testListAllUsers...");
         String userList = mockDatabase.listAllUsers();
         assertTrue("Admin should be listed.", userList.contains("adminUser"));
@@ -38,6 +55,22 @@ public class JUnit_Testing {
 	
 	@Test
 	public void testFindGroupByName() { //NOT DONE!!!!!!!!!!!!!!!!!!!!!!!!!
+		mockDatabase = new Database();
+        mockGroup = new SpecialAccessGroup("SpecialGroup");
+
+        // Mock users and groups for testing
+        Admin admin = new Admin("adminUser", "AdminPassword");
+        Student student = new Student("studentUser", "StudentPassword");
+        Instructor instructor = new Instructor("instructorUser", "InstructorPassword");
+
+        mockDatabase.addUser(admin);
+        mockDatabase.addUser(student);
+        mockDatabase.addUser(instructor);
+
+        mockGroup.addAdmin(admin);
+        mockGroup.addStudent(student);
+        mockGroup.addInstructor(instructor);
+		
 		System.out.println("\nStarting: testFindGroupByName...");
 		// fill in some stuff
 		HelpGroup group = new HelpGroup("NormalGroup");
@@ -47,7 +80,23 @@ public class JUnit_Testing {
 	
 	@Test
     public void testGetAllGroupNames() {
-    	System.out.println("\nStarting: testGetAllGroupNames...");
+		mockDatabase = new Database();
+        mockGroup = new SpecialAccessGroup("SpecialGroup");
+
+        // Mock users and groups for testing
+        Admin admin = new Admin("adminUser", "AdminPassword");
+        Student student = new Student("studentUser", "StudentPassword");
+        Instructor instructor = new Instructor("instructorUser", "InstructorPassword");
+
+        mockDatabase.addUser(admin);
+        mockDatabase.addUser(student);
+        mockDatabase.addUser(instructor);
+
+        mockGroup.addAdmin(admin);
+        mockGroup.addStudent(student);
+        mockGroup.addInstructor(instructor);
+		
+		System.out.println("\nStarting: testGetAllGroupNames...");
         String userList = mockDatabase.listAllUsers();
         assertTrue("Admin should be listed.", userList.contains("adminUser"));
         assertTrue( "Student should be listed.", userList.contains("studentUser"));
@@ -56,7 +105,23 @@ public class JUnit_Testing {
 	
 	@Test
     public void testFindSpecialAccessGroupByName() {
-    	System.out.println("\nStarting: testFindSpecialAccessGroupByName...");
+		mockDatabase = new Database();
+        mockGroup = new SpecialAccessGroup("SpecialGroup");
+
+        // Mock users and groups for testing
+        Admin admin = new Admin("adminUser", "AdminPassword");
+        Student student = new Student("studentUser", "StudentPassword");
+        Instructor instructor = new Instructor("instructorUser", "InstructorPassword");
+
+        mockDatabase.addUser(admin);
+        mockDatabase.addUser(student);
+        mockDatabase.addUser(instructor);
+
+        mockGroup.addAdmin(admin);
+        mockGroup.addStudent(student);
+        mockGroup.addInstructor(instructor);
+		
+		System.out.println("\nStarting: testFindSpecialAccessGroupByName...");
     	SpecialAccessGroup group = new SpecialAccessGroup("SpecialGroup");
     	
     	assertTrue("Group should be added", mockDatabase.addSpecialAccessGroup(group));
