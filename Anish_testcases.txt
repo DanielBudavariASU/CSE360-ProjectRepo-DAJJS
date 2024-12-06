@@ -1,0 +1,1054 @@
+*************************************************************************************************************
+UPDATED FUNCTIONS IN Database.java
+*************************************************************************************************************
+
+    public void backupHelpArticles(String fileName, List<String> groupNames, User user) {
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(fileName))) {
+            List<HelpArticle> articlesToBackup = new ArrayList<>();
+            
+            if (user instanceof Student) {
+            	System.out.println("Students do not have permission to backup articles.");
+            	return;
+            }
+
+            if (groupNames == null || groupNames.isEmpty()) {
+                // If group names are not specified, backup all articles, filtering based on user's permissions.
+                for (HelpArticle article : helpArticles) {
+                    if (hasAccessToArticle(user, article)) {
+                        articlesToBackup.add(article);
+                    }
+                }
+            } else {
+                // If specific groups are provided, only backup articles from those groups.
+                for (String groupName : groupNames) {
+                    // First, find the group in the general groups.
+                    HelpGroup group = findGroupByName(groupName);
+                    if (group != null) {
+                        // Add articles from general group if user has access.
+                        for (HelpArticle article : group.getArticles()) {
+                            if (!articlesToBackup.contains(article) && hasAccessToArticle(user, article)) {
+                                articlesToBackup.add(article);
+                            }
+                        }
+                    }
+
+                    // Then, look in special access groups.
+                    SpecialAccessGroup specialGroup = findSpecialAccessGroupByName(groupName);
+                    if (specialGroup != null) {
+                        if (specialGroup.hasAccess(user)) {
+                            // Add articles from special access group if user has access.
+                            for (HelpArticle article : specialGroup.getArticles()) {
+                                if (!articlesToBackup.contains(article)) {
+                                    articlesToBackup.add(article);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            out.writeObject(articlesToBackup);
+            System.out.println("Help articles backed up successfully to " + fileName);
+        } catch (IOException e) {
+            System.out.println("Error backing up help articles: " + e.getMessage());
+        }
+        
+    }
+
+    public List<HelpArticle> restoreHelpArticles(String fileName, boolean merge, User user) {
+    	
+    	if (user instanceof Student) {
+    		System.out.println("Students do not have permission to restore articles.");
+        	return null;
+    	}
+    	
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(fileName))) {
+            List<HelpArticle> restoredArticles = (List<HelpArticle>) in.readObject();
+            List<HelpArticle> accessibleArticles = new ArrayList<>(); 
+
+            if (merge) {
+                // Merge restored articles with current list (without duplicates)
+                for (HelpArticle article : restoredArticles) {
+                	if (hasAccessToArticle(user, article)) {
+                		accessibleArticles.add(article);
+                	}
+                    if (findHelpArticleById(article.getArticleId()) == null && hasAccessToArticle(user, article)) {
+                        helpArticles.add(article);
+ 
+                        // Update helpGroups and specialGroups to reflect the restored article's group memberships
+                        for (String groupName : article.getGroups()) {
+                            HelpGroup group = findOrCreateGroup(groupName);
+                            group.addArticle(article);
+                        }
+
+                        for (String specialGroupName : article.getSpecialAccessGroups()) {
+                            SpecialAccessGroup specialGroup = findSpecialAccessGroupByName(specialGroupName);
+                            if (specialGroup == null) {
+                                specialGroup = new SpecialAccessGroup(specialGroupName);
+                                specialAccessGroups.add(specialGroup);
+                            }
+                            specialGroup.addArticle(article);
+                        }
+                    }
+                }
+            } else {
+                // Replace the current list entirely if allowed.
+                if (user instanceof Admin) {
+                    // Check if Admin has access to all the articles they are trying to restore
+                    boolean hasAccess = restoredArticles.stream().allMatch(article -> hasAccessToArticle(user, article));
+                    if (!hasAccess) {
+                        System.out.println("Error: Admin does not have access to all articles being restored.");
+                        return null;
+                    }
+
+                    // Replace current articles list if admin has access
+                    helpArticles = restoredArticles;
+                    accessibleArticles = restoredArticles;
+
+                    // Clear current groups and rebuild them based on restored articles
+                    helpGroups.clear();
+                    specialAccessGroups.clear();
+                    for (HelpArticle article : restoredArticles) {
+                        for (String groupName : article.getGroups()) {
+                            HelpGroup group = findOrCreateGroup(groupName);
+                            group.addArticle(article);
+                        }
+
+                        for (String specialGroupName : article.getSpecialAccessGroups()) {
+                            SpecialAccessGroup specialGroup = findSpecialAccessGroupByName(specialGroupName);
+                            if (specialGroup == null) {
+                                specialGroup = new SpecialAccessGroup(specialGroupName);
+                                specialAccessGroups.add(specialGroup);
+                            }
+                            specialGroup.addArticle(article);
+                        }
+                    }
+                } else {
+                    System.out.println("Error: Only Admins can fully replace the help articles list.");
+                }
+            }
+
+            saveHelpArticles();  // Persist the updated articles list
+            saveHelpGroups();    // Persist the updated groups list
+            saveSpecialAccessGroups(); // Persist the updated special groups list
+            System.out.println("Help articles restored successfully from " + fileName);
+            
+            return accessibleArticles;
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("Error restoring help articles: " + e.getMessage());
+        }
+        
+        return null;
+    }
+
+    public void clearAllHelpArticlesAndGroups() {
+        // Clear all help articles from the helpArticles list
+        helpArticles.clear();
+
+        // Clear all groups from helpGroups
+        helpGroups.clear();
+
+        // Clear all special access groups from specialAccessGroups
+        specialAccessGroups.clear();
+
+        // Log confirmation to ensure that everything has been cleared
+        System.out.println("All help articles, help groups, and special access groups have been cleared from the database.");
+    }
+
+    public boolean removeHelpGroup(String groupName) {
+        boolean removed = false;
+
+        // Remove from general help groups
+        if (helpGroups.removeIf(group -> group.getGroupName().equals(groupName))) {
+            removed = true;
+        }
+
+        // Remove from special access groups
+        if (specialAccessGroups.removeIf(group -> group.getGroupName().equals(groupName))) {
+            removed = true;
+        }
+
+        // Save changes if anything was removed
+        if (removed) {
+            saveHelpGroups(); // Save updated help groups list
+            saveSpecialAccessGroups(); // Save updated special access groups list
+            System.out.println("Help group removed successfully!");
+        } else {
+            System.out.println("Error: Help group not found.");
+        }
+
+        return removed;
+    }
+
+*************************************************************************************************************
+UPDATED FUNCTIONS IN HelpGroup.java
+*************************************************************************************************************
+
+    public HelpGroup(String groupName) {
+        this.groupName = groupName;
+        this.articles = new ArrayList<>();
+    }
+
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
+    }
+
+*************************************************************************************************************
+HW#8: JUnit Test for backing up Help articles
+*************************************************************************************************************
+
+
+package trial;
+
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class JUnit_Backup {
+
+    private Database mockDatabase;
+
+    @BeforeEach
+    public void setUp() {
+        // Delete all `.ser` files to ensure a fresh setup
+        File folder = new File(".");
+        for (File file : folder.listFiles()) {
+            if (file.getName().endsWith(".ser")) {
+                file.delete();
+            }
+        }
+
+        System.out.println("\n-----------------------------------------");
+        System.out.println("-----------------------------------------");
+        System.out.println("Starting Setup for Each Test\n");
+
+        // Setup mock database
+        mockDatabase = new Database();
+
+        // Create users: Admin, Instructor, and Student
+        Admin adminWithAccess = new Admin("adminUser", "AdminPassword");
+        Admin adminWithoutAccess = new Admin("adminWithoutAccess", "AdminPassword");
+        Instructor instructor = new Instructor("instructorUser", "InstructorPassword");
+        Student student = new Student("studentUser", "StudentPassword");
+
+        mockDatabase.addUser(adminWithAccess);
+        mockDatabase.addUser(adminWithoutAccess);
+        mockDatabase.addUser(instructor);
+        mockDatabase.addUser(student);
+
+        // Create help groups
+        HelpGroup generalGroup = new HelpGroup("GeneralGroup");
+        SpecialAccessGroup specialGroup = new SpecialAccessGroup("SpecialGroup");
+        
+        // Assign users to groups
+        specialGroup.addInstructor(instructor);
+        specialGroup.addStudent(student);
+        specialGroup.addAdmin(adminWithAccess);
+        
+        // Add articles
+        List<String> keywords = new ArrayList<>();
+        List<String> references = new ArrayList<>();
+        List<String> generalGroups = new ArrayList<>();
+        List<String> specialGroups = new ArrayList<>();
+        
+        generalGroups.add("GeneralGroup");
+        HelpArticle generalArticle = new HelpArticle("General Article", "author1", "beginner", "A general help article.", keywords, "This is the body of a general article.", references, generalGroups, new ArrayList<>(), false);
+        
+        specialGroups.add("SpecialGroup");
+        HelpArticle specialArticle = new HelpArticle("Special Article", "author2", "expert", "A special access help article.", keywords, "This is the body of a special article.", references, new ArrayList<>(), specialGroups, true);
+        
+        mockDatabase.addHelpGroup(generalGroup);
+        mockDatabase.addSpecialAccessGroup(specialGroup);
+        mockDatabase.addHelpArticle(generalArticle);
+        mockDatabase.addHelpArticle(specialArticle);
+
+        System.out.println("\nSetup completed successfully!");
+        System.out.println("-----------------------------------------");
+        System.out.println("-----------------------------------------");
+    }
+
+    @Test
+    public void testBackupHelpArticles_InstructorWithAccess() {
+        System.out.println("\n-----------------   TEST   --------------------");
+        System.out.println("Starting: testBackupHelpArticles_InstructorWithAccess");
+
+        String backupFileName = "temp_backup_instructor_with_access.ser";
+        File backupFile = new File(backupFileName);
+
+        try {
+            // Backup help articles accessible by the instructor
+            List<String> groups = List.of("GeneralGroup", "SpecialGroup");
+            Instructor instructor = (Instructor) mockDatabase.findUserByUsername("instructorUser");
+
+            mockDatabase.backupHelpArticles(backupFileName, groups, instructor);
+
+            // Verify the backup file exists
+            assertTrue(backupFile.exists(), "Backup file should exist.");
+
+            try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(backupFileName))) {
+                List<HelpArticle> backedUpArticles = (List<HelpArticle>) in.readObject();
+
+                assertEquals(2, backedUpArticles.size(), "The number of backed-up articles should be 2.");
+
+                boolean hasGeneralArticle = false;
+                boolean hasSpecialArticle = false;
+                
+                for (HelpArticle article : backedUpArticles) {
+                    System.out.println("Article found from backup file: " + article.getTitle());
+
+                    if (article.getTitle().equals("General Article")) {
+                        hasGeneralArticle = true;
+                    } else if (article.getTitle().equals("Special Article")) {
+                        hasSpecialArticle = true;
+                    }
+                }
+
+                assertTrue(hasGeneralArticle, "General Article should be backed up.");
+                assertTrue(hasSpecialArticle, "Special Article should be backed up.");
+                System.out.println("Instructor backup test passed successfully.");
+            }
+
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+            fail("Exception occurred during backup or reading backup: " + e.getMessage());
+        } finally {
+            if (backupFile.exists()) {
+                backupFile.delete();
+            }
+        }
+
+        System.out.println("\n-----------------   TEST END  --------------------");
+    }
+
+    @Test
+    public void testBackupHelpArticles_AdminWithoutAccessToSpecialGroup() {
+    	System.out.println("\n-----------------   TEST   --------------------");
+        System.out.println("Starting: testBackupHelpArticles_AdminWithoutAccessToSpecialGroup");
+
+        String backupFileName = "temp_backup_admin_no_special_access.ser";
+        File backupFile = new File(backupFileName);
+
+        try {
+            List<String> groups = List.of("GeneralGroup", "SpecialGroup");
+            Admin adminWithoutAccess = (Admin) mockDatabase.findUserByUsername("adminWithoutAccess");
+
+            mockDatabase.backupHelpArticles(backupFileName, groups, adminWithoutAccess);
+
+            // Verify the backup file exists
+            assertTrue(backupFile.exists(), "Backup file should exist.");
+
+            try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(backupFileName))) {
+                List<HelpArticle> backedUpArticles = (List<HelpArticle>) in.readObject();
+
+                // Since adminWithoutAccess has no access to "SpecialGroup", only the general article should be backed up
+                assertEquals(1, backedUpArticles.size(), "The number of backed-up articles should be 1.");
+
+                HelpArticle backedUpArticle = backedUpArticles.get(0);
+                assertEquals("General Article", backedUpArticle.getTitle(), "Only the general article should be backed up.");
+                System.out.println("Admin without access to special group test passed successfully.");
+            }
+
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+            fail("Exception occurred during backup or reading backup: " + e.getMessage());
+        } finally {
+            if (backupFile.exists()) {
+                backupFile.delete();
+            }
+        }
+
+        System.out.println("\n-----------------   TEST END  --------------------");
+    }
+
+    @Test
+    public void testBackupHelpArticles_Student() throws IOException {
+        System.out.println("\n-----------------   TEST   --------------------");
+        System.out.println("Starting: testBackupHelpArticles_Student");
+
+        String backupFileName = "temp_backup_student.ser";
+        File backupFile = new File(backupFileName);
+
+        try {
+            List<String> groups = List.of("GeneralGroup", "SpecialGroup");
+            Student student = (Student) mockDatabase.findUserByUsername("studentUser");
+
+            // Perform the backup attempt by student
+            mockDatabase.backupHelpArticles(backupFileName, groups, student);
+
+            // Verify the backup file exists
+            assertTrue(backupFile.exists(), "Backup file should exist for students (even if it is empty).");
+
+            // Read back the articles from the backup file
+            try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(backupFileName))) {
+                List<HelpArticle> backedUpArticles = (List<HelpArticle>) in.readObject();
+
+                // Verify the number of articles backed up is zero
+                assertEquals(0, backedUpArticles.size(), "No articles should be backed up for students.");
+                System.out.println("Student backup test passed successfully, backup file contains zero articles as expected.");
+
+            } catch (EOFException e) {
+                // This is expected if the file is empty
+                System.out.println("EOFException caught: No articles backed up as expected for students.");
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+                fail("Exception occurred during backup or reading backup: " + e.getMessage());
+            }
+
+        } finally {
+            // Clean up: Delete the temporary backup file after test
+            if (backupFile.exists()) {
+                backupFile.delete();
+            }
+        }
+
+        System.out.println("\n-----------------   TEST END  --------------------");
+    }
+
+
+}
+
+
+*************************************************************************************************************
+HW#8: JUnit Test for restoring Help articles
+*************************************************************************************************************
+
+package trial;
+
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class JUnit_Restore {
+
+    private Database mockDatabase;
+    private String backupFileName = "articles_backup.ser";
+
+    @BeforeEach
+    public void setUp() {
+    	
+    	 // Delete all `.ser` files to ensure a fresh setup
+        File folder = new File(".");
+        for (File file : folder.listFiles()) {
+            if (file.getName().endsWith(".ser")) {
+                file.delete();
+            }
+        }
+        
+        System.out.println("\n-----------------------------------------");
+        System.out.println("-----------------------------------------");
+        System.out.println("Starting Setup for Each Test\n");
+    	
+        // Setup mock database
+        mockDatabase = new Database();
+
+        // Create users
+        Admin adminWithFullAccess = new Admin("adminFullAccess", "password");
+        Instructor instructorFullAccess = new Instructor("instructorFullAccess", "password");
+        Instructor instructorOnlySAG1 = new Instructor("instructorOnlySAG1", "password");
+        Instructor instructorNoSpecialAccess = new Instructor("instructorNoSpecialAccess", "password");
+        Student studentWithSAG1 = new Student("studentWithSAG1", "password");
+
+        // Add users to the database
+        mockDatabase.addUser(adminWithFullAccess);
+        mockDatabase.addUser(instructorFullAccess);
+        mockDatabase.addUser(instructorOnlySAG1);
+        mockDatabase.addUser(instructorNoSpecialAccess);
+        mockDatabase.addUser(studentWithSAG1);
+
+        // Create help groups
+        HelpGroup generalGroup = new HelpGroup("GeneralGroup");
+        SpecialAccessGroup specialGroup1 = new SpecialAccessGroup("SAG1");
+        SpecialAccessGroup specialGroup2 = new SpecialAccessGroup("SAG2");
+
+        // Add users to special groups
+        specialGroup1.addInstructorAdmin(instructorFullAccess);
+        specialGroup1.addInstructorAdmin(instructorOnlySAG1);
+        specialGroup1.addStudent(studentWithSAG1);
+        specialGroup1.addAdmin(adminWithFullAccess);
+
+        specialGroup2.addInstructorAdmin(instructorFullAccess);
+        specialGroup2.addAdmin(adminWithFullAccess);
+
+        // Add groups to the database
+        mockDatabase.addHelpGroup(generalGroup);
+        mockDatabase.addSpecialAccessGroup(specialGroup1);
+        mockDatabase.addSpecialAccessGroup(specialGroup2);
+
+        // Create articles
+        List<String> keywords = new ArrayList<>();
+        List<String> references = new ArrayList<>();
+        
+        List<String> generalGroups = new ArrayList<>();
+        generalGroups.add("GeneralGroup");
+        HelpArticle articleGeneral = new HelpArticle("General Article", "author1", "beginner", "General article description", keywords, "This is a general article body.", references, generalGroups, new ArrayList<>(), false);
+
+        List<String> specialGroups1 = new ArrayList<>();
+        specialGroups1.add("SAG1");
+        HelpArticle articleSAG1 = new HelpArticle("SAG1 Article", "author2", "intermediate", "SAG1 article description", keywords, "This is a SAG1 article body.", references, new ArrayList<>(), specialGroups1, true);
+
+        List<String> specialGroups2 = new ArrayList<>();
+        specialGroups2.add("SAG2");
+        HelpArticle articleSAG2 = new HelpArticle("SAG2 Article", "author3", "expert", "SAG2 article description", keywords, "This is a SAG2 article body.", references, new ArrayList<>(), specialGroups2, true);
+
+        // Add articles to the database
+        mockDatabase.addHelpArticle(articleGeneral);
+        mockDatabase.addHelpArticle(articleSAG1);
+        mockDatabase.addHelpArticle(articleSAG2);
+
+        // Backup all articles with the admin having access to all groups
+        mockDatabase.backupHelpArticles(backupFileName, List.of("GeneralGroup", "SAG1", "SAG2"), adminWithFullAccess);
+        
+        System.out.println("\nSetup completed successfully!");
+        System.out.println("-----------------------------------------");
+        System.out.println("-----------------------------------------");
+    }
+
+    
+    @Test
+    public void testRestoreArticles_InstructorWithFullAccess() {
+        System.out.println("\n-----------------   TEST   --------------------");
+        System.out.println("Starting: testRestoreArticles_InstructorWithFullAccess");
+       
+        // Get the instructor with full access
+        Instructor instructorFullAccess = (Instructor) mockDatabase.findUserByUsername("instructorFullAccess");
+
+        // Restore articles
+        List<HelpArticle> restoredArticles = mockDatabase.restoreHelpArticles(backupFileName, true, instructorFullAccess);
+
+        // Verify all articles are restored
+        assertNotNull(restoredArticles, "Restored articles list should not be null.");
+        assertEquals(3, restoredArticles.size(), "All three articles should be restored.");
+        System.out.println("All articles restored successfully for instructor with full access.");
+
+        // Additional verification for special access groups
+        boolean hasSAG1Article = false;
+        boolean hasSAG2Article = false;
+
+        for (HelpArticle article : restoredArticles) {
+            System.out.println("Restored Article Title: " + article.getTitle() + ", Special Access Groups: " + article.getSpecialAccessGroups());
+            
+            if (article.getSpecialAccessGroups().contains("SAG1")) {
+                hasSAG1Article = true;
+            }
+            if (article.getSpecialAccessGroups().contains("SAG2")) {
+                hasSAG2Article = true;
+            }
+        }
+
+        // Verify that articles from each special access group are restored
+        assertTrue(hasSAG1Article, "There should be at least one article from SAG1 restored.");
+        assertTrue(hasSAG2Article, "There should be at least one article from SAG2 restored.");
+        System.out.println("All articles from SAG1, and SAG2 have been restored successfully for instructor with full access.");
+
+        System.out.println("\n-----------------   TEST END  --------------------"); 
+    }
+
+
+    @Test
+    public void testRestoreArticles_InstructorWithOnlySAG1Access() {
+        System.out.println("\n-----------------   TEST   --------------------");
+        System.out.println("Starting: testRestoreArticles_InstructorWithOnlySAG1Access");
+        
+        Instructor instructorOnlySAG1 = (Instructor) mockDatabase.findUserByUsername("instructorOnlySAG1");
+        
+        // Restore articles
+        List<HelpArticle> restoredArticles = mockDatabase.restoreHelpArticles(backupFileName, true, instructorOnlySAG1);
+
+        // Verify only articles in SAG1 and general group are restored
+        assertNotNull(restoredArticles, "Restored articles list should not be null.");
+        assertEquals(2, restoredArticles.size(), "Only two articles should be restored (General and SAG1).");
+        
+        boolean hasGeneralArticle = false;
+        boolean hasSAG1Article = false;
+
+        for (HelpArticle article : restoredArticles) {
+            if (article.getTitle().equals("General Article")) {
+                hasGeneralArticle = true;
+            } else if (article.getTitle().equals("SAG1 Article")) {
+                hasSAG1Article = true;
+            }
+        }
+
+        assertTrue(hasGeneralArticle, "General Article should be restored.");
+        assertTrue(hasSAG1Article, "SAG1 Article should be restored.");
+        System.out.println("Articles in SAG1 and General groups restored successfully for instructor with only SAG1 access.");
+
+        System.out.println("\n-----------------   TEST END  --------------------");
+    }
+
+    @Test
+    public void testRestoreArticles_InstructorWithNoSpecialAccess() {
+        System.out.println("\n-----------------   TEST   --------------------");
+        System.out.println("Starting: testRestoreArticles_InstructorWithNoSpecialAccess");
+        
+        mockDatabase.clearAllHelpArticlesAndGroups();
+
+        Instructor instructorNoSpecialAccess = (Instructor) mockDatabase.findUserByUsername("instructorNoSpecialAccess");
+
+        // Restore articles
+        List<HelpArticle> restoredArticles = mockDatabase.restoreHelpArticles(backupFileName, true, instructorNoSpecialAccess);
+
+        // Verify only the general group article is restored
+        assertNotNull(restoredArticles, "Restored articles list should not be null.");
+        assertEquals(1, restoredArticles.size(), "Only one article should be restored (General group).");
+        
+        HelpArticle restoredArticle = restoredArticles.get(0);
+        assertEquals("General Article", restoredArticle.getTitle(), "Only General Article should be restored.");
+        System.out.println("General group article restored successfully for instructor with no special access.");
+
+        System.out.println("\n-----------------   TEST END  --------------------");
+    }
+    
+    @Test
+    public void testRestoreArticles_Student() {
+        System.out.println("\n-----------------   TEST   --------------------");
+        System.out.println("Starting: testRestoreArticles_Student");
+
+        // Get the student user
+        Student student = (Student) mockDatabase.findUserByUsername("studentWithSAG1");
+
+        // Attempt to restore articles
+        List<HelpArticle> restoredArticles = mockDatabase.restoreHelpArticles(backupFileName, true, student);
+
+        // Verify that the restored articles list is null, as students cannot restore articles
+        assertNull(restoredArticles, "Restored articles list should be null since students cannot restore articles.");
+        System.out.println("Student attempted to restore articles and was denied successfully.");
+
+        System.out.println("\n-----------------   TEST END  --------------------");
+    }
+
+}
+
+*************************************************************************************************************
+HW#8: JUnit Test for removing Help Groups
+*************************************************************************************************************
+
+package trial;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.io.File;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+public class JUnit_RemoveHelpGroup {
+
+    private Database mockDatabase;
+
+    @BeforeEach
+    public void setUp() {
+    	
+    	 // Delete all `.ser` files to ensure a fresh setup
+        File folder = new File(".");
+        for (File file : folder.listFiles()) {
+            if (file.getName().endsWith(".ser")) {
+                file.delete();
+            }
+        }
+        
+        System.out.println("\n-----------------------------------------");
+        System.out.println("-----------------------------------------");
+        System.out.println("Starting Setup for Each Test\n");
+    	
+        // Setup mock database
+        mockDatabase = new Database();
+
+        // Create users: Admin
+        Admin admin = new Admin("adminUser", "AdminPassword");
+        mockDatabase.addUser(admin);
+
+        // Create help groups
+        HelpGroup generalGroup1 = new HelpGroup("GeneralGroup1");
+        HelpGroup generalGroup2 = new HelpGroup("GeneralGroup2");
+        SpecialAccessGroup specialGroup1 = new SpecialAccessGroup("SpecialGroup1");
+        SpecialAccessGroup specialGroup2 = new SpecialAccessGroup("SpecialGroup2");
+
+        // Add groups to the database
+        mockDatabase.addHelpGroup(generalGroup1);
+        mockDatabase.addHelpGroup(generalGroup2);
+        mockDatabase.addSpecialAccessGroup(specialGroup1);
+        mockDatabase.addSpecialAccessGroup(specialGroup2);
+        
+        System.out.println("\nSetup completed successfully!");
+        System.out.println("-----------------------------------------");
+        System.out.println("-----------------------------------------");
+    }
+
+    @Test
+    public void testRemoveExistingGeneralHelpGroup() {
+        System.out.println("\n-----------------   TEST   --------------------");
+        System.out.println("Starting: testRemoveExistingGeneralHelpGroup");
+
+        // Remove an existing general group
+        boolean removed = mockDatabase.removeHelpGroup("GeneralGroup1");
+
+        // Assert that the group was removed successfully
+        assertTrue(removed, "General group 'GeneralGroup1' should be removed successfully.");
+
+        // Verify that the group no longer exists
+        assertNull(mockDatabase.findGroupByName("GeneralGroup1"), "General group 'GeneralGroup1' should not be found.");
+
+        System.out.println("General group removal test passed successfully.");
+        System.out.println("\n-----------------   TEST END  --------------------");
+    }
+
+    @Test
+    public void testRemoveExistingSpecialAccessGroup() {
+        System.out.println("\n-----------------   TEST   --------------------");
+        System.out.println("Starting: testRemoveExistingSpecialAccessGroup");
+
+        // Remove an existing special access group
+        boolean removed = mockDatabase.removeHelpGroup("SpecialGroup1");
+
+        // Assert that the group was removed successfully
+        assertTrue(removed, "Special access group 'SpecialGroup1' should be removed successfully.");
+
+        // Verify that the group no longer exists
+        assertNull(mockDatabase.findSpecialAccessGroupByName("SpecialGroup1"), "Special access group 'SpecialGroup1' should not be found.");
+
+        System.out.println("Special access group removal test passed successfully.");
+        System.out.println("\n-----------------   TEST END  --------------------");
+    }
+
+    @Test
+    public void testRemoveNonExistentGeneralHelpGroup() {
+        System.out.println("\n-----------------   TEST   --------------------");
+        System.out.println("Starting: testRemoveNonExistentGeneralHelpGroup");
+
+        // Attempt to remove a non-existent general group
+        boolean removed = mockDatabase.removeHelpGroup("NonExistentGeneralGroup");
+
+        // Assert that the group was not removed
+        assertFalse(removed, "Non-existent general group 'NonExistentGeneralGroup' should not be removed.");
+
+        System.out.println("Non-existent general group removal test passed successfully.");
+        System.out.println("\n-----------------   TEST END  --------------------");
+    }
+
+    @Test
+    public void testRemoveNonExistentSpecialAccessGroup() {
+        System.out.println("\n-----------------   TEST   --------------------");
+        System.out.println("Starting: testRemoveNonExistentSpecialAccessGroup");
+
+        // Attempt to remove a non-existent special access group
+        boolean removed = mockDatabase.removeHelpGroup("NonExistentSpecialAccessGroup");
+
+        // Assert that the group was not removed
+        assertFalse(removed, "Non-existent special access group 'NonExistentSpecialAccessGroup' should not be removed.");
+
+        System.out.println("Non-existent special access group removal test passed successfully.");
+        System.out.println("\n-----------------   TEST END  --------------------");
+    }
+}
+
+
+*************************************************************************************************************
+Added Test Case for Phase 4: JUnit Test for Searching Articles
+*************************************************************************************************************
+
+package trial;
+
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+public class JUnit_SearchArticles {
+
+    private Database mockDatabase;
+    private Admin admin;
+    private Instructor instructorWithAccess;
+    private Instructor instructorWithoutAccess;
+    private Student student;
+
+    @BeforeEach
+    public void setUp() {
+    	
+    	// Delete all `.ser` files to ensure a fresh setup
+        File folder = new File(".");
+        for (File file : folder.listFiles()) {
+            if (file.getName().endsWith(".ser")) {
+                file.delete();
+            }
+        }
+    	
+        // Set up a fresh mock database
+        mockDatabase = new Database();
+
+        // Create users: Admin, Instructor, Student
+        admin = new Admin("adminUser", "AdminPassword");
+        instructorWithAccess = new Instructor("instructorWithAccess", "InstructorPassword");
+        instructorWithoutAccess = new Instructor("instructorWithoutAccess", "InstructorPassword");
+        student = new Student("studentUser", "StudentPassword");
+
+        mockDatabase.addUser(admin);
+        mockDatabase.addUser(instructorWithAccess);
+        mockDatabase.addUser(instructorWithoutAccess);
+        mockDatabase.addUser(student);
+
+        // Create help groups and special access groups
+        HelpGroup generalGroup = new HelpGroup("GeneralGroup");
+        SpecialAccessGroup specialGroup = new SpecialAccessGroup("SpecialGroup");
+
+        // Assign users to groups
+        specialGroup.addInstructor(instructorWithAccess);
+
+        // Add groups to the database
+        mockDatabase.addHelpGroup(generalGroup);
+        mockDatabase.addSpecialAccessGroup(specialGroup);
+
+        // Create articles
+        List<String> keywords = new ArrayList<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
+        List<String> references = new ArrayList<>();
+
+        List<String> generalGroups = new ArrayList<>();
+        generalGroups.add("GeneralGroup");
+        HelpArticle generalArticle = new HelpArticle("General Article", "author1", "beginner", "This is a general article", keywords, "This is a general article body", references, generalGroups, new ArrayList<>(), false);
+
+        List<String> specialGroups = new ArrayList<>();
+        specialGroups.add("SpecialGroup");
+        HelpArticle specialArticle = new HelpArticle("Special Article", "author2", "expert", "This is a special access article", keywords, "This is a special access article body", references, new ArrayList<>(), specialGroups, true);
+
+        // Add articles to the database
+        mockDatabase.addHelpArticle(generalArticle);
+        mockDatabase.addHelpArticle(specialArticle);
+    }
+
+    @Test
+    public void testSearchByKeyword_GeneralAccess() {
+        System.out.println("\n-----------------   TEST   --------------------");
+        System.out.println("Starting: testSearchByKeyword_GeneralAccess");
+
+        // Search articles with a keyword in the title or description
+        List<HelpArticle> foundArticles = mockDatabase.searchArticles(student, "general", null, "all");
+
+        // Verify that the search returns only the general article
+        assertNotNull(foundArticles, "The returned list should not be null.");
+        assertEquals(1, foundArticles.size(), "There should be 1 article found.");
+        assertEquals("General Article", foundArticles.get(0).getTitle(), "The found article should be the General Article.");
+
+        System.out.println("Test passed successfully for searching general articles by keyword.");
+        System.out.println("\n-----------------   TEST END  --------------------");
+    }
+
+    @Test
+    public void testSearchSpecialAccess_InstructorWithAccess() {
+        System.out.println("\n-----------------   TEST   --------------------");
+        System.out.println("Starting: testSearchSpecialAccess_InstructorWithAccess");
+
+        // Search articles in a special access group by an instructor with access
+        List<HelpArticle> foundArticles = mockDatabase.searchArticles(instructorWithAccess, "special", "SpecialGroup", "all");
+
+        // Verify that the instructor with access can see the special access article
+        assertNotNull(foundArticles, "The returned list should not be null.");
+        assertEquals(1, foundArticles.size(), "There should be 1 article found.");
+        assertEquals("Special Article", foundArticles.get(0).getTitle(), "The found article should be the Special Article.");
+
+        System.out.println("Test passed successfully for searching special access articles with access.");
+        System.out.println("\n-----------------   TEST END  --------------------");
+    }
+
+    @Test
+    public void testSearchSpecialAccess_InstructorWithoutAccess() {
+        System.out.println("\n-----------------   TEST   --------------------");
+        System.out.println("Starting: testSearchSpecialAccess_InstructorWithoutAccess");
+
+        // Search articles in a special access group by an instructor without access
+        List<HelpArticle> foundArticles = mockDatabase.searchArticles(instructorWithoutAccess, "special", "SpecialGroup", "all");
+
+        // Verify that the instructor without access cannot see the special access article
+        assertNotNull(foundArticles, "The returned list should not be null.");
+        assertEquals(0, foundArticles.size(), "No articles should be found as the instructor doesn't have access.");
+
+        System.out.println("Test passed successfully for restricted access to special articles.");
+        System.out.println("\n-----------------   TEST END  --------------------");
+    }
+
+    @Test
+    public void testSearchWithLevelAndGroup() {
+        System.out.println("\n-----------------   TEST   --------------------");
+        System.out.println("Starting: testSearchWithLevelAndGroup");
+
+        // Search for beginner-level articles in the general group
+        List<HelpArticle> foundArticles = mockDatabase.searchArticles(admin, "", "GeneralGroup", "beginner");
+
+        // Verify that only the general beginner-level article is found
+        assertNotNull(foundArticles, "The returned list should not be null.");
+        assertEquals(1, foundArticles.size(), "There should be 1 article found.");
+        assertEquals("General Article", foundArticles.get(0).getTitle(), "The found article should be the General Article.");
+
+        System.out.println("Test passed successfully for searching articles by level and group.");
+        System.out.println("\n-----------------   TEST END  --------------------");
+    }
+}
+
+*************************************************************************************************************
+Added Test Case for Phase 4: Invitation Based Login (invitation sent by admin)
+*************************************************************************************************************
+
+package trial;
+
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+public class JUnit_InvitationLogin {
+
+    private Database mockDatabase;
+    private Admin admin;
+
+    @BeforeEach
+    public void setUp() {
+    	
+    	// Delete all `.ser` files to ensure a fresh setup
+        File folder = new File(".");
+        for (File file : folder.listFiles()) {
+            if (file.getName().endsWith(".ser")) {
+                file.delete();
+            }
+        }
+    	
+        // Set up a fresh mock database
+        mockDatabase = new Database();
+
+        // Create an admin user for inviting new users
+        admin = new Admin("adminUser", "AdminPassword");
+        mockDatabase.addUser(admin);
+    }
+
+    @Test
+    public void testAdminInviteNewInstructor() {
+        System.out.println("\n-----------------   TEST   --------------------");
+        System.out.println("Starting: testAdminInviteNewInstructor");
+
+        // Admin sends an invitation for an Instructor
+        Invitation invitation = admin.inviteUser("Instructor");
+
+        // Verify that the invitation is generated correctly
+        assertNotNull(invitation, "Invitation should not be null.");
+        assertEquals("Instructor", invitation.getRole(), "Role should be 'Instructor'.");
+        assertFalse(invitation.isUsed(), "Invitation should not be marked as used initially.");
+
+        // Add the invitation to the mock database
+        mockDatabase.addInvitation(invitation);
+        assertNotNull(mockDatabase.findInvitationByCode(invitation.getCode()), "Invitation should be added to the database.");
+
+        System.out.println("Invitation for instructor generated and added to the database successfully.");
+        System.out.println("\n-----------------   TEST END  --------------------");
+    }
+
+    @Test
+    public void testSuccessfulAccountCreationWithInvitation() {
+        System.out.println("\n-----------------   TEST   --------------------");
+        System.out.println("Starting: testSuccessfulAccountCreationWithInvitation");
+
+        // Admin sends an invitation for an Instructor
+        Invitation invitation = admin.inviteUser("Instructor");
+        mockDatabase.addInvitation(invitation);
+
+        // Use the invitation code to create an account
+        String invitationCode = invitation.getCode();
+        String username = "newInstructor";
+        String password = "password123";
+
+        Invitation foundInvitation = mockDatabase.findInvitationByCode(invitationCode);
+        assertNotNull(foundInvitation, "Invitation should be found in the database.");
+        assertFalse(foundInvitation.isUsed(), "Invitation should not be used yet.");
+
+        // Create new user with invitation
+        Instructor newInstructor = new Instructor(username, password);
+        mockDatabase.addUser(newInstructor);
+        foundInvitation.markAsUsed();
+        mockDatabase.saveInvitations();  // Save changes to the database
+
+        // Verify account creation
+        assertNotNull(mockDatabase.findUserByUsername(username), "The new user should be added to the database.");
+        assertTrue(foundInvitation.isUsed(), "Invitation should be marked as used after account creation.");
+
+        System.out.println("Account creation using valid invitation was successful.");
+        System.out.println("\n-----------------   TEST END  --------------------");
+    }
+
+    @Test
+    public void testAccountCreationWithInvalidInvitationCode() {
+        System.out.println("\n-----------------   TEST   --------------------");
+        System.out.println("Starting: testAccountCreationWithInvalidInvitationCode");
+
+        // Attempt to create an account with an invalid invitation code
+        String invalidInvitationCode = "INVALID-CODE";
+        Invitation foundInvitation = mockDatabase.findInvitationByCode(invalidInvitationCode);
+
+        // Verify that no invitation is found
+        assertNull(foundInvitation, "No invitation should be found for an invalid code.");
+
+        System.out.println("Account creation failed as expected with an invalid invitation code.");
+        System.out.println("\n-----------------   TEST END  --------------------");
+    }
+
+    @Test
+    public void testReusingUsedInvitationCode() {
+        System.out.println("\n-----------------   TEST   --------------------");
+        System.out.println("Starting: testReusingUsedInvitationCode");
+
+        // Admin sends an invitation for an Instructor
+        Invitation invitation = admin.inviteUser("Instructor");
+        mockDatabase.addInvitation(invitation);
+
+        // Use the invitation code once to create an account
+        String invitationCode = invitation.getCode();
+        String username = "instructor1";
+        String password = "password123";
+        Instructor newInstructor = new Instructor(username, password);
+        mockDatabase.addUser(newInstructor);
+        invitation.markAsUsed();
+
+        // Attempt to reuse the same invitation code
+        Invitation foundInvitation = mockDatabase.findInvitationByCode(invitationCode);
+        assertNull(foundInvitation, "Invitation should not be found.");
+
+        System.out.println("Reusing a used invitation code was prevented successfully.");
+        System.out.println("\n-----------------   TEST END  --------------------");
+    }
+
+    @Test
+    public void testInvitationForDifferentRoles() {
+        System.out.println("\n-----------------   TEST   --------------------");
+        System.out.println("Starting: testInvitationForDifferentRoles");
+
+        // Admin sends invitations for different roles
+        Invitation instructorInvitation = admin.inviteUser("Instructor");
+        Invitation adminInvitation = admin.inviteUser("Admin");
+        Invitation studentInvitation = admin.inviteUser("Student");
+
+        mockDatabase.addInvitation(instructorInvitation);
+        mockDatabase.addInvitation(adminInvitation);
+        mockDatabase.addInvitation(studentInvitation);
+
+        // Verify that each invitation is stored correctly
+        assertEquals("Instructor", mockDatabase.findInvitationByCode(instructorInvitation.getCode()).getRole(), "Role should be 'Instructor'.");
+        assertEquals("Admin", mockDatabase.findInvitationByCode(adminInvitation.getCode()).getRole(), "Role should be 'Admin'.");
+        assertEquals("Student", mockDatabase.findInvitationByCode(studentInvitation.getCode()).getRole(), "Role should be 'Student'.");
+
+        System.out.println("Invitations for different roles created and verified successfully.");
+        System.out.println("\n-----------------   TEST END  --------------------");
+    }
+}
+
+*************************************************************************************************************
+*************************************************************************************************************
