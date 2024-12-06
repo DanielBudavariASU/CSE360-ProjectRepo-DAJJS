@@ -1,0 +1,202 @@
+Search Help Articles By Name 
+package trial;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+class JUNIT_TESTING {
+	private Database mockDatabase;
+	private SpecialAccessGroup mockGroup;
+	
+	@BeforeEach
+   public void setUp() {
+		System.out.println("\n____________________________________");
+       mockDatabase = new Database();
+       mockGroup = new SpecialAccessGroup("SpecialGroup");
+       // Mock users and groups for testing
+       Admin admin = new Admin("adminUser", "AdminPassword");
+       Student student = new Student("studentUser", "StudentPassword");
+       Instructor instructor = new Instructor("instructorUser", "InstructorPassword");
+       mockDatabase.addUser(admin);
+       mockDatabase.addUser(student);
+       mockDatabase.addUser(instructor);
+       mockGroup.addAdmin(admin);
+       mockGroup.addStudent(student);
+       mockGroup.addInstructor(instructor);
+       System.out.println("____________________________________");
+   }	
+	@Test
+   public void testFindSpecialAccessGroupByName() {
+		System.out.println("\n____________________________________");
+		System.out.println("\nStarting: testFindSpecialAccessGroupByName...");
+   	SpecialAccessGroup group = new SpecialAccessGroup("SpecialGroup");
+   	
+   	assertTrue(mockDatabase.addSpecialAccessGroup(group));
+   	
+   	//Verify the group can be found
+   	SpecialAccessGroup foundGroup = mockDatabase.findSpecialAccessGroupByName("SpecialGroup");
+       assertNotNull(foundGroup);
+       assertEquals(foundGroup.getGroupName(), "Found group name should match.");
+       // Verify that a non-existent group returns null
+       SpecialAccessGroup notFoundGroup = mockDatabase.findSpecialAccessGroupByName("NonExistentGroup");
+       assertNull(notFoundGroup);
+       System.out.println("____________________________________");
+   }
+}
+
+
+
+
+
+
+Search Help Articles Using the Unique Long Integer
+void setUp() {
+       admin = new Admin("adminUser", "password");
+       mockDatabase = new Database();
+      
+       // Add sample help articles
+       article1 = new HelpArticle(
+       	    "Title1",                // Title
+       	    "Author1",               // Author
+       	    "Beginner",              // Level
+       	    "Abstract1",             // Short Description
+       	    List.of("Keyword1"),     // Keywords
+       	    "Body1",                 // Body
+       	    List.of("Reference1"),   // References
+       	    List.of("Group1"),       // Groups
+       	    List.of("SpecialGroup1"),// Special Groups
+       	    false                    // Is in Special Access Group
+       	);
+       	article2 = new HelpArticle(
+       	    "Title2",                // Title
+       	    "Author2",               // Author
+       	    "Intermediate",          // Level
+       	    "Abstract2",             // Short Description
+       	    List.of("Keyword2"),     // Keywords
+       	    "Body2",                 // Body
+       	    List.of("Reference2"),   // References
+       	    List.of("Group2"),       // Groups
+       	    List.of("SpecialGroup2"),// Special Groups
+       	    true                     // Is in Special Access Group
+       	);
+       mockDatabase.addHelpArticle(article1);
+       mockDatabase.addHelpArticle(article2);
+       // Add a special access group with studentsS
+       group = new SpecialAccessGroup("Group1");
+       Student student1 = new Student("student1", "testpass1");
+       Student student2 = new Student("student2", "testpass2");
+       group.addStudent(student1);
+       group.addStudent(student2);
+       mockDatabase.addSpecialAccessGroup(group);
+   }
+
+
+
+
+
+
+Special Access Group Needs to be Saved to the Database
+package trial;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.io.File;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+public class JUnit_AddSpecialAccessGroup {
+
+    private Database mockDatabase;
+
+    @BeforeEach
+    public void setUp() {
+    	
+    	// Delete all `.ser` files to ensure a fresh setup
+        File folder = new File(".");
+        for (File file : folder.listFiles()) {
+            if (file.getName().endsWith(".ser")) {
+                file.delete();
+            }
+        }
+        
+        System.out.println("\n-----------------------------------------");
+        System.out.println("-----------------------------------------");
+        System.out.println("Starting Setup for Each Test\n");
+    	
+        // Setup mock database
+        mockDatabase = new Database();
+        
+        System.out.println("\nSetup completed successfully!");
+        System.out.println("-----------------------------------------");
+        System.out.println("-----------------------------------------");
+    }
+
+    @Test
+    public void testAddNewSpecialAccessGroup() {
+        System.out.println("\n-----------------   TEST   --------------------");
+        System.out.println("Starting: testAddNewSpecialAccessGroup");
+
+        // Create a new special access group
+        SpecialAccessGroup newSpecialGroup = new SpecialAccessGroup("SpecialGroup1");
+
+        // Add the group to the database
+        boolean isAdded = mockDatabase.addSpecialAccessGroup(newSpecialGroup);
+
+        // Verify that the group is added successfully
+        assertTrue(isAdded, "Special access group 'SpecialGroup1' should be added successfully.");
+
+        // Verify that the group can be found in the database
+        assertNotNull(mockDatabase.findSpecialAccessGroupByName("SpecialGroup1"), "Special access group 'SpecialGroup1' should be found in the database.");
+
+        System.out.println("Special access group 'SpecialGroup1' was added successfully.");
+        System.out.println("\n-----------------   TEST END  --------------------");
+    }
+
+    @Test
+    public void testAddDuplicateSpecialAccessGroup() {
+        System.out.println("\n-----------------   TEST   --------------------");
+        System.out.println("Starting: testAddDuplicateSpecialAccessGroup");
+
+        // Create and add a new special access group
+        SpecialAccessGroup specialGroup1 = new SpecialAccessGroup("SpecialGroup1");
+        mockDatabase.addSpecialAccessGroup(specialGroup1);
+
+        // Attempt to add the same group again
+        boolean isAddedAgain = mockDatabase.addSpecialAccessGroup(specialGroup1);
+
+        // Verify that the group is not added again
+        assertFalse(isAddedAgain, "Duplicate special access group 'SpecialGroup1' should not be added.");
+
+        System.out.println("Attempt to add duplicate special access group was correctly denied.");
+        System.out.println("\n-----------------   TEST END  --------------------");
+    }
+
+    @Test
+    public void testAddMultipleSpecialAccessGroups() {
+        System.out.println("\n-----------------   TEST   --------------------");
+        System.out.println("Starting: testAddMultipleSpecialAccessGroups");
+
+        // Create multiple special access groups
+        SpecialAccessGroup specialGroup1 = new SpecialAccessGroup("SpecialGroup1");
+        SpecialAccessGroup specialGroup2 = new SpecialAccessGroup("SpecialGroup2");
+        SpecialAccessGroup specialGroup3 = new SpecialAccessGroup("SpecialGroup3");
+
+        // Add all groups to the database
+        boolean addedGroup1 = mockDatabase.addSpecialAccessGroup(specialGroup1);
+        boolean addedGroup2 = mockDatabase.addSpecialAccessGroup(specialGroup2);
+        boolean addedGroup3 = mockDatabase.addSpecialAccessGroup(specialGroup3);
+
+        // Verify that all groups are added successfully
+        assertTrue(addedGroup1, "Special access group 'SpecialGroup1' should be added successfully.");
+        assertTrue(addedGroup2, "Special access group 'SpecialGroup2' should be added successfully.");
+        assertTrue(addedGroup3, "Special access group 'SpecialGroup3' should be added successfully.");
+
+        // Verify that all groups can be found in the database
+        assertNotNull(mockDatabase.findSpecialAccessGroupByName("SpecialGroup1"), "Special access group 'SpecialGroup1' should be found in the database.");
+        assertNotNull(mockDatabase.findSpecialAccessGroupByName("SpecialGroup2"), "Special access group 'SpecialGroup2' should be found in the database.");
+        assertNotNull(mockDatabase.findSpecialAccessGroupByName("SpecialGroup3"), "Special access group 'SpecialGroup3' should be found in the database.");
+
+        System.out.println("Multiple special access groups were added successfully.");
+        System.out.println("\n-----------------   TEST END  --------------------");
+    }
+}
